@@ -1,13 +1,14 @@
 /**
  * G28 STEPPER CONTROLLER — MASTER SCRIPT
- * Direct standalone Web Bluetooth integration with clean simple mobile UI.
+ * Responsive Desktop & Mobile Stepper Controller with Web Bluetooth API.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // App State
+  // App State — Starts strictly at 0 RPM & 0° position
   const state = {
     activeMode: 1, // 1 = Velocity Mode, 2 = Position Mode
-    currentSpeedRpm: 40,
+    currentSpeedRpm: 0,
+    targetSpeedRpm: 0,
     directionForward: true,
     isEmergencyStopped: false,
     currentAngleDegrees: 0,
@@ -50,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
     emergencyBtnText: document.getElementById('emergencyBtnText')
   };
 
-  // Stepper Motor Canvas Widget
+  // Stepper Motor Canvas Widget (starts at 0 RPM = idle)
   const motorWidget = new StepperMotorWidget('motorCanvas');
 
   // Real Web Bluetooth Controller
@@ -65,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     onConnectionChanged: ({ state: connState, deviceName }) => {
       if (connState === 'connected') {
         state.isConnected = true;
-        state.connectedDeviceName = deviceName || "Bluetooth Device";
+        state.connectedDeviceName = deviceName || "ESP32 Controller";
       } else if (connState === 'connecting') {
         state.isConnected = false;
         state.connectedDeviceName = "Connecting...";
@@ -87,17 +88,17 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Update UI to match current state
+  // Update UI to match state
   function updateUI() {
     // 1. Motor Speed Display
     if (els.motorSpeedVal) {
       els.motorSpeedVal.textContent = state.isEmergencyStopped ? "0 RPM" : `${state.currentSpeedRpm} RPM`;
     }
 
-    // 2. Direction Info Display
+    // 2. Direction Display
     if (els.dirVal) {
       els.dirVal.textContent = state.directionForward ? "FORWARD" : "REVERSE";
-      els.dirVal.style.color = state.directionForward ? "var(--primary-cyan)" : "var(--accent-purple)";
+      els.dirVal.style.color = state.directionForward ? "var(--cyan-primary)" : "var(--purple-accent)";
     }
     if (els.dirCmdSub) {
       els.dirCmdSub.textContent = state.directionForward ? "Clockwise" : "Counter-Clockwise";
@@ -108,8 +109,8 @@ document.addEventListener('DOMContentLoaded', () => {
       els.currentAngleVal.textContent = `${state.currentAngleDegrees}°`;
     }
 
-    // 4. Motor Visualizer State
-    const isRunning = state.isConnected && !state.isEmergencyStopped && state.currentSpeedRpm > 0;
+    // 4. Stepper Motor Visualizer Animation State
+    const isRunning = !state.isEmergencyStopped && state.currentSpeedRpm > 0;
 
     motorWidget.updateState({
       isRunning: isRunning,
@@ -194,13 +195,13 @@ document.addEventListener('DOMContentLoaded', () => {
     if (mode === 1) {
       els.tabVelocity.classList.add('active', 'velocity');
       els.tabPosition.classList.remove('active', 'position');
-      els.velocityPage.style.display = 'flex';
+      els.velocityPage.style.display = 'block';
       els.positionPage.style.display = 'none';
       sendCommand('M1');
     } else {
       els.tabPosition.classList.add('active', 'position');
       els.tabVelocity.classList.remove('active', 'velocity');
-      els.positionPage.style.display = 'flex';
+      els.positionPage.style.display = 'block';
       els.velocityPage.style.display = 'none';
       sendCommand('M2');
     }
@@ -210,11 +211,12 @@ document.addEventListener('DOMContentLoaded', () => {
   els.tabVelocity.addEventListener('click', () => setOperatingMode(1));
   els.tabPosition.addEventListener('click', () => setOperatingMode(2));
 
-  // Speed Slider
+  // Speed Slider Control (Starts at 0 RPM)
   let debounceTimer = null;
   els.speedSlider.addEventListener('input', (e) => {
     if (state.isEmergencyStopped) return;
     const rpm = parseInt(e.target.value) || 0;
+    state.targetSpeedRpm = rpm;
     state.currentSpeedRpm = rpm;
     els.sliderReadout.textContent = `${rpm} RPM`;
     updateUI();
@@ -222,7 +224,7 @@ document.addEventListener('DOMContentLoaded', () => {
     clearTimeout(debounceTimer);
     debounceTimer = setTimeout(() => {
       sendCommand(`V${rpm}`);
-    }, 150);
+    }, 120);
   });
 
   // Direction Buttons
@@ -244,18 +246,24 @@ document.addEventListener('DOMContentLoaded', () => {
       if (state.isEmergencyStopped) return;
       const deg = parseInt(chip.dataset.deg) || 0;
       els.angleInputField.value = deg.toString();
+      state.currentAngleDegrees = (state.currentAngleDegrees + deg) % 360;
+      if (state.currentAngleDegrees < 0) state.currentAngleDegrees += 360;
+      updateUI();
       sendCommand(`G${deg}`);
     });
   });
 
-  // Move Go Button
+  // Rotate / Set Angle Button
   els.btnMoveGo.addEventListener('click', () => {
     if (state.isEmergencyStopped) return;
     const deg = parseInt(els.angleInputField.value.trim()) || 0;
+    state.currentAngleDegrees = (state.currentAngleDegrees + deg) % 360;
+    if (state.currentAngleDegrees < 0) state.currentAngleDegrees += 360;
+    updateUI();
     sendCommand(`G${deg}`);
   });
 
-  // Zero Tare
+  // Reset to 0° Button
   els.btnZeroTare.addEventListener('click', () => {
     state.currentAngleDegrees = 0;
     updateUI();
@@ -265,11 +273,16 @@ document.addEventListener('DOMContentLoaded', () => {
   // Emergency Stop Hero Button
   els.btnHeroEmergencyStop.addEventListener('click', () => {
     state.isEmergencyStopped = !state.isEmergencyStopped;
+    if (state.isEmergencyStopped) {
+      state.currentSpeedRpm = 0;
+    } else {
+      state.currentSpeedRpm = state.targetSpeedRpm;
+    }
     updateUI();
     sendCommand('S');
   });
 
-  // Connect & Disconnect Handlers
+  // Pair Bluetooth & Disconnect
   els.btnPairBt.addEventListener('click', async () => {
     await bleController.requestAndConnect();
   });

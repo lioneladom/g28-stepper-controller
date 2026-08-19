@@ -1,6 +1,5 @@
 /* ==========================================================================
    G28 STEPPER CONTROLLER — COMPONENT STYLES
-   Exact 1:1 mobile layout components with vector SVGs and clean labels
    ========================================================================== */
 
 /* 1. Connection Status Bar */
@@ -8,7 +7,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 16px;
+  padding: 14px 18px;
+  margin-bottom: 16px;
 }
 
 .connection-info {
@@ -20,8 +20,8 @@
 }
 
 .status-dot {
-  width: 12px;
-  height: 12px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
   background-color: var(--text-dim);
   flex-shrink: 0;
@@ -29,63 +29,75 @@
 }
 
 .status-dot.connected {
-  background-color: var(--success-green);
-  box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+  background-color: var(--green-success);
+  box-shadow: 0 0 12px var(--green-glow);
 }
 
 .status-dot.connecting {
-  background-color: var(--warning-yellow);
-  box-shadow: 0 0 10px rgba(255, 193, 7, 0.6);
+  background-color: var(--yellow-accent);
+  box-shadow: 0 0 12px var(--yellow-glow);
 }
 
 .status-text {
   font-family: var(--font-mono);
-  font-size: 0.82rem;
+  font-size: 0.85rem;
+  font-weight: 600;
   color: var(--text-main);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.btn-pair-bt {
-  background: rgba(0, 229, 255, 0.15);
-  color: var(--primary-cyan);
-  border: none;
+.btn-pair {
+  background: var(--cyan-dim);
+  color: var(--cyan-primary);
+  border: 1px solid var(--cyan-primary);
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.btn-pair:hover {
+  background: var(--cyan-primary);
+  color: #000;
+  box-shadow: 0 0 15px var(--cyan-glow);
+}
+
+.btn-disconnect {
+  background: transparent;
+  color: var(--red-danger);
+  border: 1px solid rgba(239, 68, 68, 0.4);
   padding: 8px 14px;
   border-radius: 12px;
   font-family: var(--font-mono);
   font-size: 0.78rem;
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
   cursor: pointer;
-  transition: background 0.2s ease;
+  transition: all 0.2s ease;
 }
 
-.btn-pair-bt:hover {
-  background: rgba(0, 229, 255, 0.25);
-}
-
-.btn-disconnect {
-  background: transparent;
-  color: var(--danger-red);
-  border: none;
-  padding: 8px 12px;
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
+.btn-disconnect:hover {
+  background: var(--red-dim);
+  border-color: var(--red-danger);
 }
 
 /* 2. Mode Switching Tabs */
-.mode-segmented-tabs {
+.mode-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  background-color: var(--card-bg);
+  background-color: var(--bg-surface);
   border: 1px solid var(--card-border);
-  border-radius: 16px;
+  border-radius: 14px;
   padding: 4px;
+  margin-bottom: 18px;
 }
 
 .mode-tab {
@@ -93,39 +105,46 @@
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 12px 8px;
-  border-radius: 13px;
-  border: 2px solid transparent;
+  padding: 12px 10px;
+  border-radius: 10px;
+  border: 1.5px solid transparent;
   background: transparent;
   color: var(--text-dim);
   font-family: var(--font-header);
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 700;
+  letter-spacing: 0.5px;
   cursor: pointer;
   transition: all 0.2s ease;
+  user-select: none;
+}
+
+.mode-tab:hover {
+  color: var(--text-muted);
 }
 
 .mode-tab.active.velocity {
-  background: rgba(0, 229, 255, 0.15);
-  border-color: var(--primary-cyan);
-  color: var(--primary-cyan);
+  background: var(--cyan-dim);
+  border-color: var(--cyan-primary);
+  color: var(--cyan-primary);
 }
 
 .mode-tab.active.position {
-  background: rgba(255, 193, 7, 0.15);
-  border-color: var(--warning-yellow);
-  color: var(--warning-yellow);
+  background: var(--yellow-dim);
+  border-color: var(--yellow-accent);
+  color: var(--yellow-accent);
 }
 
 /* 3. Emergency Alert Banner */
 .emergency-banner {
   display: none;
-  padding: 12px 16px;
-  background: rgba(255, 23, 68, 0.15);
-  border: 2px solid var(--danger-red);
-  border-radius: 16px;
+  padding: 14px 18px;
+  background: var(--red-dim);
+  border: 1.5px solid var(--red-danger);
+  border-radius: 14px;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
+  margin-bottom: 18px;
 }
 
 .emergency-banner.active {
@@ -136,33 +155,43 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  color: var(--red-danger);
 }
 
 .emergency-banner-title {
   font-family: var(--font-header);
   font-size: 0.85rem;
-  color: var(--danger-red);
-  font-weight: 700;
+  color: var(--red-danger);
+  font-weight: 800;
+  letter-spacing: 0.5px;
 }
 
 .emergency-banner-sub {
   font-family: var(--font-body);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
 }
 
-/* 4. Stepper Motor Visualizer */
-.motor-wrapper {
+/* 4. Stepper Motor Visualizer (Left Column on Desktop) */
+.motor-column {
   display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.motor-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   justify-content: center;
-  margin: 4px 0 10px 0;
+  padding: 24px 20px;
 }
 
 .motor-container {
-  width: 190px;
-  height: 190px;
+  width: 220px;
+  height: 220px;
   border-radius: 50%;
-  background-color: var(--card-bg);
+  background-color: #0b111e;
   border: 3px solid var(--card-border);
   position: relative;
   display: flex;
@@ -172,18 +201,18 @@
 }
 
 .motor-container.running-fwd {
-  border-color: var(--primary-cyan);
-  box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+  border-color: var(--cyan-primary);
+  box-shadow: 0 0 25px var(--cyan-glow);
 }
 
 .motor-container.running-rev {
-  border-color: var(--accent-purple);
-  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+  border-color: var(--purple-accent);
+  box-shadow: 0 0 25px rgba(168, 85, 247, 0.3);
 }
 
 .motor-container.halted {
-  border-color: var(--danger-red);
-  box-shadow: 0 0 20px rgba(255, 23, 68, 0.4);
+  border-color: var(--red-danger);
+  box-shadow: 0 0 25px var(--red-glow);
 }
 
 #motorCanvas {
@@ -197,57 +226,101 @@
 
 .motor-status-pill {
   position: absolute;
-  bottom: 14px;
-  padding: 4px 10px;
-  background: rgba(11, 15, 25, 0.9);
+  bottom: 16px;
+  padding: 4px 12px;
+  background: rgba(9, 13, 22, 0.95);
   border: 1px solid var(--card-border);
   border-radius: 12px;
   font-family: var(--font-mono);
-  font-size: 0.65rem;
+  font-size: 0.7rem;
   font-weight: 700;
   color: var(--text-dim);
   z-index: 10;
+  backdrop-filter: blur(8px);
 }
 
 .motor-status-pill.fwd {
-  color: var(--primary-cyan);
+  color: var(--cyan-primary);
+  border-color: rgba(0, 229, 255, 0.4);
 }
 
 .motor-status-pill.rev {
-  color: var(--accent-purple);
+  color: var(--purple-accent);
+  border-color: rgba(168, 85, 247, 0.4);
 }
 
 .motor-status-pill.halted {
-  color: var(--danger-red);
-  border-color: var(--danger-red);
+  color: var(--red-danger);
+  border-color: rgba(239, 68, 68, 0.4);
 }
 
-/* 5. Info Cards Row */
+/* 5. Hero Emergency Stop Button */
+.hero-emergency-btn {
+  width: 100%;
+  padding: 16px 20px;
+  border-radius: 14px;
+  border: 2px solid var(--red-danger);
+  background: var(--red-dim);
+  color: var(--red-danger);
+  font-family: var(--font-header);
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  user-select: none;
+}
+
+.hero-emergency-btn:hover {
+  background: var(--red-danger);
+  color: #fff;
+  box-shadow: 0 0 20px var(--red-glow);
+}
+
+.hero-emergency-btn.active {
+  background: var(--red-danger);
+  color: #fff;
+  box-shadow: 0 0 25px var(--red-glow);
+}
+
+/* 6. Info Row (Speed & Direction) */
 .info-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 14px;
+  margin-bottom: 16px;
 }
 
 .info-card-header {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   margin-bottom: 8px;
 }
 
 .info-card-value {
   font-family: var(--font-header);
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-size: 1.15rem;
+  font-weight: 800;
   margin-bottom: 2px;
 }
 
-/* 6. Speed Slider Card */
+.subtext-muted {
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+/* 7. Speed Slider Card */
 .speed-slider-card {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  margin-bottom: 16px;
 }
 
 .speed-slider-header {
@@ -258,58 +331,69 @@
 
 .speed-value-cyan {
   font-family: var(--font-header);
-  font-size: 1.15rem;
-  color: var(--primary-cyan);
-  font-weight: 700;
+  font-size: 1.25rem;
+  color: var(--cyan-primary);
+  font-weight: 800;
 }
 
-input[type="range"].mobile-slider {
+input[type="range"].sleek-slider {
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 6px;
-  background: var(--card-border);
-  border-radius: 4px;
+  height: 8px;
+  background: var(--bg-surface);
+  border: 1px solid var(--card-border);
+  border-radius: 6px;
   outline: none;
+  cursor: pointer;
 }
 
-input[type="range"].mobile-slider::-webkit-slider-thumb {
+input[type="range"].sleek-slider::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
-  background: var(--primary-cyan);
+  background: var(--cyan-primary);
   cursor: pointer;
-  box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+  box-shadow: 0 0 12px var(--cyan-primary);
+  border: 2px solid #fff;
+  transition: transform 0.1s ease;
 }
 
-input[type="range"].mobile-slider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: var(--primary-cyan);
-  cursor: pointer;
+input[type="range"].sleek-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.15);
 }
 
-/* 7. Direction Control Buttons */
+input[type="range"].sleek-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--cyan-primary);
+  cursor: pointer;
+  box-shadow: 0 0 12px var(--cyan-primary);
+  border: 2px solid #fff;
+}
+
+/* 8. Direction Buttons */
 .direction-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 12px;
+  gap: 14px;
 }
 
 .direction-btn {
-  background: transparent;
+  background: var(--bg-surface);
   border: 2px solid var(--card-border);
-  border-radius: 16px;
-  padding: 16px 8px;
+  border-radius: 14px;
+  padding: 16px 12px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
+  user-select: none;
 }
 
 .direction-btn svg {
@@ -322,60 +406,67 @@ input[type="range"].mobile-slider::-moz-range-thumb {
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--text-dim);
+  letter-spacing: 0.5px;
   transition: color 0.2s ease;
 }
 
+.direction-btn:hover {
+  border-color: var(--card-border-focus);
+}
+
 .direction-btn.active.fwd {
-  background: rgba(0, 229, 255, 0.15);
-  border-color: var(--primary-cyan);
+  background: var(--cyan-dim);
+  border-color: var(--cyan-primary);
 }
 .direction-btn.active.fwd svg,
 .direction-btn.active.fwd .dir-label {
-  color: var(--primary-cyan);
+  color: var(--cyan-primary);
 }
 
 .direction-btn.active.rev {
-  background: rgba(139, 92, 246, 0.15);
-  border-color: var(--accent-purple);
+  background: var(--purple-dim);
+  border-color: var(--purple-accent);
 }
 .direction-btn.active.rev svg,
 .direction-btn.active.rev .dir-label {
-  color: var(--accent-purple);
+  color: var(--purple-accent);
 }
 
-/* 8. Angle Go Mode Components */
+/* 9. Angle Position Components */
 .angle-summary-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  margin-bottom: 16px;
 }
 
 .angle-large-value {
   font-family: var(--font-header);
-  font-size: 1.6rem;
-  color: var(--warning-yellow);
+  font-size: 1.8rem;
+  color: var(--yellow-accent);
   font-weight: 800;
   margin-top: 4px;
 }
 
-.btn-zero-tare {
+.btn-reset-zero {
   background: transparent;
-  border: 1px solid var(--warning-yellow);
-  color: var(--warning-yellow);
-  padding: 10px 14px;
+  border: 1px solid var(--yellow-accent);
+  color: var(--yellow-accent);
+  padding: 10px 16px;
   border-radius: 12px;
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.78rem;
+  font-weight: 700;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
+  user-select: none;
 }
 
-.btn-zero-tare:hover {
-  background: rgba(255, 193, 7, 0.15);
+.btn-reset-zero:hover {
+  background: var(--yellow-dim);
 }
 
 .chips-scroll {
@@ -383,101 +474,79 @@ input[type="range"].mobile-slider::-moz-range-thumb {
   gap: 8px;
   overflow-x: auto;
   padding-bottom: 4px;
-  margin: 10px 0 14px 0;
+  margin: 10px 0 16px 0;
 }
 
 .chips-scroll::-webkit-scrollbar {
-  display: none;
+  height: 4px;
+}
+.chips-scroll::-webkit-scrollbar-thumb {
+  background: var(--card-border);
+  border-radius: 4px;
 }
 
 .angle-chip {
-  background-color: var(--bg-dark);
+  background-color: var(--bg-surface);
   border: 1px solid var(--card-border);
-  color: var(--warning-yellow);
+  color: var(--yellow-accent);
   font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 6px 14px;
-  border-radius: 16px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 12px;
   white-space: nowrap;
   cursor: pointer;
   flex-shrink: 0;
   transition: all 0.2s ease;
+  user-select: none;
 }
 
 .angle-chip:hover {
-  border-color: var(--warning-yellow);
-  background: rgba(255, 193, 7, 0.1);
+  border-color: var(--yellow-accent);
+  background: var(--yellow-dim);
 }
 
 .angle-input-row {
   display: flex;
-  gap: 10px;
+  gap: 12px;
 }
 
 .angle-input-field {
   flex: 1;
-  background-color: var(--bg-dark);
+  background-color: var(--bg-surface);
   border: 1px solid var(--card-border);
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 12px 16px;
   color: var(--text-main);
   font-family: var(--font-mono);
-  font-size: 0.95rem;
+  font-size: 1rem;
   outline: none;
+  transition: border-color 0.2s ease;
 }
 
 .angle-input-field:focus {
-  border-color: var(--warning-yellow);
+  border-color: var(--yellow-accent);
 }
 
-.btn-move-go {
-  background-color: var(--warning-yellow);
-  color: var(--bg-dark);
+.btn-rotate {
+  background-color: var(--yellow-accent);
+  color: #000;
   border: none;
-  border-radius: 14px;
-  padding: 12px 20px;
+  border-radius: 12px;
+  padding: 12px 22px;
   font-family: var(--font-header);
   font-size: 0.85rem;
   font-weight: 800;
+  letter-spacing: 0.5px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   cursor: pointer;
-  transition: opacity 0.2s ease;
+  transition: opacity 0.2s ease, transform 0.1s ease;
+  user-select: none;
 }
 
-.btn-move-go:hover {
+.btn-rotate:hover {
   opacity: 0.9;
-}
-
-/* 9. Hero Emergency Stop Button */
-.hero-emergency-btn {
-  width: 100%;
-  padding: 18px;
-  border-radius: 20px;
-  border: 2px solid var(--danger-red);
-  background: rgba(255, 23, 68, 0.15);
-  color: var(--danger-red);
-  font-family: var(--font-header);
-  font-size: 0.92rem;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  margin-top: 6px;
-}
-
-.hero-emergency-btn:hover {
-  background: var(--danger-red);
-  color: #fff;
-}
-
-.hero-emergency-btn.active {
-  background: var(--danger-red);
-  color: #fff;
-  box-shadow: 0 0 20px rgba(255, 23, 68, 0.6);
+  transform: translateY(-1px);
 }

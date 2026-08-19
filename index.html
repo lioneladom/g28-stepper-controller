@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <meta name="theme-color" content="#0B0F19">
-  <meta name="description" content="G28 Stepper Motor Controller — Web Application">
+  <meta name="theme-color" content="#090D16">
+  <meta name="description" content="G28 Stepper Motor Controller — Modern Web Application">
   <title>G28 Stepper Controller</title>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Orbitron:wght@600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700;800&family=Orbitron:wght@600;700;800;900&display=swap" rel="stylesheet">
 
   <!-- Stylesheets -->
   <link rel="stylesheet" href="css/main.css">
@@ -18,177 +18,185 @@
 </head>
 <body>
 
-  <div class="app-shell">
+  <div class="app-container">
 
-    <!-- Top AppBar -->
-    <header class="app-bar">
+    <!-- Top Header -->
+    <header class="app-header">
       <h1 class="app-title">G28 STEPPER CONTROLLER</h1>
     </header>
 
-    <!-- Main Content -->
-    <main class="app-content">
-
-      <!-- 1. Connection Status Bar Card -->
-      <div class="card connection-bar">
-        <div class="connection-info">
-          <div id="statusDot" class="status-dot"></div>
-          <span id="statusText" class="status-text">Disconnected</span>
-        </div>
-        <button id="btnPairBt" class="btn-pair-bt">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M6.5 6.5 17.5 17.5l-5 5V1.5l5 5L6.5 17.5"></path>
-          </svg>
-          Pair BT
-        </button>
-        <button id="btnDisconnect" class="btn-disconnect" style="display: none;">Disconnect</button>
+    <!-- Emergency Alert Banner (Shown when Emergency Stop is Active) -->
+    <div id="emergencyBanner" class="emergency-banner">
+      <div class="emergency-banner-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+          <line x1="12" y1="9" x2="12" y2="13"></line>
+          <line x1="12" y1="17" x2="12.01" y2="17"></line>
+        </svg>
       </div>
+      <div>
+        <div class="emergency-banner-title">EMERGENCY STOP ACTIVE</div>
+        <div class="emergency-banner-sub">Motor outputs released. Press button below to resume.</div>
+      </div>
+    </div>
 
-      <!-- 2. Mode Switching Segmented Tabs -->
-      <div class="mode-segmented-tabs">
-        <button id="tabVelocity" class="mode-tab active velocity">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Main Layout Grid (2 Columns on Desktop, 1 Column on Mobile) -->
+    <main class="main-grid">
+
+      <!-- LEFT COLUMN: Stepper Motor Visualizer & Emergency Stop -->
+      <section class="motor-column">
+        <div class="sleek-card motor-card">
+          <div class="section-label" style="align-self: flex-start;">MOTOR DYNAMICS</div>
+          <div id="motorBox" class="motor-container">
+            <canvas id="motorCanvas" width="220" height="220"></canvas>
+            <div id="motorPill" class="motor-status-pill">IDLE</div>
+          </div>
+        </div>
+
+        <!-- Emergency Stop Hero Button -->
+        <button id="btnHeroEmergencyStop" class="hero-emergency-btn">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
+            <rect x="9" y="9" width="6" height="6"></rect>
           </svg>
-          VELOCITY MODE
+          <span id="emergencyBtnText">EMERGENCY STOP</span>
         </button>
-        <button id="tabPosition" class="mode-tab">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
-          </svg>
-          ANGLE GO MODE
-        </button>
-      </div>
+      </section>
 
-      <!-- 3. Emergency Alert Banner (Active when stopped) -->
-      <div id="emergencyBanner" class="emergency-banner">
-        <div class="emergency-banner-icon">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--danger-red)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
-            <line x1="12" y1="9" x2="12" y2="13"></line>
-            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-          </svg>
-        </div>
-        <div>
-          <div class="emergency-banner-title">EMERGENCY STOP ACTIVE</div>
-          <div class="emergency-banner-sub">Motor outputs released. Press button below to resume.</div>
-        </div>
-      </div>
+      <!-- RIGHT COLUMN: Connection Status, Mode Switcher & Controls -->
+      <section class="controls-column">
 
-      <!-- 4. Motor Visualizer Display -->
-      <div class="motor-wrapper">
-        <div id="motorBox" class="motor-container">
-          <canvas id="motorCanvas" width="190" height="190"></canvas>
-          <div id="motorPill" class="motor-status-pill">IDLE</div>
-        </div>
-      </div>
-
-      <!-- 5. MODE 1: CONTINUOUS VELOCITY CONTROLLER VIEW -->
-      <div id="velocityPage" style="display: flex; flex-direction: column; gap: 14px;">
-        <!-- Two Info Cards -->
-        <div class="info-row">
-          <div class="card">
-            <div class="info-card-header">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary-cyan)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
-              <span class="label-mono">MOTOR SPEED</span>
-            </div>
-            <div id="motorSpeedVal" class="info-card-value" style="color: var(--primary-cyan);">0 RPM</div>
-            <div class="subtext-muted">App &amp; Potentiometer</div>
+        <!-- 1. Connection Status Bar Card -->
+        <div class="sleek-card connection-bar">
+          <div class="connection-info">
+            <div id="statusDot" class="status-dot"></div>
+            <span id="statusText" class="status-text">Disconnected</span>
           </div>
-
-          <div class="card">
-            <div class="info-card-header">
-              <svg id="dirIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary-cyan)" stroke-width="2"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
-              <span class="label-mono">DIRECTION</span>
-            </div>
-            <div id="dirVal" class="info-card-value" style="color: var(--primary-cyan);">FORWARD</div>
-            <div id="dirCmdSub" class="subtext-muted">Clockwise</div>
-          </div>
-        </div>
-
-        <!-- Speed Slider Box -->
-        <div class="label-mono">SPEED SLIDER CONTROL</div>
-        <div class="card speed-slider-card">
-          <div class="speed-slider-header">
-            <span class="subtext-muted" style="font-size: 0.82rem;">Target Speed</span>
-            <span id="sliderReadout" class="speed-value-cyan">40 RPM</span>
-          </div>
-          <input type="range" id="speedSlider" class="mobile-slider" min="0" max="80" value="40" step="1">
-          <div class="subtext-muted">Adjust motor RPM in real-time</div>
-        </div>
-
-        <!-- Direction Controls -->
-        <div class="label-mono">DIRECTION CONTROLS</div>
-        <div class="direction-row">
-          <button id="btnFwd" class="direction-btn active fwd">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="13 19 22 12 13 5 13 19"></polygon>
-              <polygon points="2 19 11 12 2 5 2 19"></polygon>
+          <button id="btnPairBt" class="btn-pair">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6.5 6.5 17.5 17.5l-5 5V1.5l5 5L6.5 17.5"></path>
             </svg>
-            <span class="dir-label">FORWARD</span>
+            Pair Bluetooth
           </button>
-          <button id="btnRev" class="direction-btn">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <polygon points="11 19 2 12 11 5 11 19"></polygon>
-              <polygon points="22 19 13 12 22 5 22 19"></polygon>
+          <button id="btnDisconnect" class="btn-disconnect" style="display: none;">Disconnect</button>
+        </div>
+
+        <!-- 2. Mode Switching Segmented Tabs -->
+        <div class="mode-tabs">
+          <button id="tabVelocity" class="mode-tab active velocity">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
             </svg>
-            <span class="dir-label">REVERSE</span>
+            VELOCITY MODE
+          </button>
+          <button id="tabPosition" class="mode-tab">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+            ANGLE MODE
           </button>
         </div>
-      </div>
 
-      <!-- 6. MODE 2: ANGLE POSITION CONTROLLER VIEW -->
-      <div id="positionPage" style="display: none; flex-direction: column; gap: 14px;">
-        <!-- Angle Position Summary Card -->
-        <div class="card angle-summary-card">
-          <div>
-            <div style="display: flex; align-items: center; gap: 6px;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--warning-yellow)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
-              <span class="label-mono">CURRENT ANGLE</span>
+        <!-- 3. MODE 1: CONTINUOUS VELOCITY CONTROLLER VIEW -->
+        <div id="velocityPage">
+          <!-- Info Row (Speed & Direction) -->
+          <div class="info-row">
+            <div class="sleek-card">
+              <div class="info-card-header">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cyan-primary)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                <span class="section-label" style="margin: 0;">MOTOR SPEED</span>
+              </div>
+              <div id="motorSpeedVal" class="info-card-value" style="color: var(--cyan-primary);">0 RPM</div>
+              <div class="subtext-muted">Live Speed Readout</div>
             </div>
-            <div id="currentAngleVal" class="angle-large-value">0°</div>
-          </div>
-          <button id="btnZeroTare" class="btn-zero-tare">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
-            ZERO TARE
-          </button>
-        </div>
 
-        <!-- Target Angle Positioning Card -->
-        <div class="label-mono" style="color: var(--warning-yellow);">TARGET ANGLE POSITIONING</div>
-        <div class="card" style="display: flex; flex-direction: column; gap: 12px;">
-          <div class="subtext-muted">Select or enter relative target movement:</div>
-
-          <!-- Preset Angle Quick Chips -->
-          <div class="chips-scroll">
-            <button class="angle-chip" data-deg="15">+15°</button>
-            <button class="angle-chip" data-deg="45">+45°</button>
-            <button class="angle-chip" data-deg="90">+90°</button>
-            <button class="angle-chip" data-deg="180">+180°</button>
-            <button class="angle-chip" data-deg="-45">-45°</button>
-            <button class="angle-chip" data-deg="-90">-90°</button>
-            <button class="angle-chip" data-deg="-180">-180°</button>
+            <div class="sleek-card">
+              <div class="info-card-header">
+                <svg id="dirIcon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--cyan-primary)" stroke-width="2"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                <span class="section-label" style="margin: 0;">DIRECTION</span>
+              </div>
+              <div id="dirVal" class="info-card-value" style="color: var(--cyan-primary);">FORWARD</div>
+              <div id="dirCmdSub" class="subtext-muted">Clockwise</div>
+            </div>
           </div>
 
-          <div class="angle-input-row">
-            <input type="number" id="angleInputField" class="angle-input-field" value="90" placeholder="Target Angle">
-            <button id="btnMoveGo" class="btn-move-go">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
-              MOVE GO
+          <!-- Speed Slider Box -->
+          <div class="section-label">SPEED SLIDER CONTROL</div>
+          <div class="sleek-card speed-slider-card">
+            <div class="speed-slider-header">
+              <span class="subtext-muted" style="font-size: 0.85rem; font-weight: 500;">Target Velocity</span>
+              <span id="sliderReadout" class="speed-value-cyan">0 RPM</span>
+            </div>
+            <input type="range" id="speedSlider" class="sleek-slider" min="0" max="80" value="0" step="1">
+            <div class="subtext-muted">Adjust motor RPM from 0 to 80</div>
+          </div>
+
+          <!-- Direction Controls -->
+          <div class="section-label">DIRECTION CONTROLS</div>
+          <div class="direction-row">
+            <button id="btnFwd" class="direction-btn active fwd">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="13 19 22 12 13 5 13 19"></polygon>
+                <polygon points="2 19 11 12 2 5 2 19"></polygon>
+              </svg>
+              <span class="dir-label">FORWARD</span>
+            </button>
+            <button id="btnRev" class="direction-btn">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <polygon points="11 19 2 12 11 5 11 19"></polygon>
+                <polygon points="22 19 13 12 22 5 22 19"></polygon>
+              </svg>
+              <span class="dir-label">REVERSE</span>
             </button>
           </div>
         </div>
-      </div>
 
-      <!-- 7. Emergency Stop Hero Button -->
-      <button id="btnHeroEmergencyStop" class="hero-emergency-btn">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <rect x="9" y="9" width="6" height="6"></rect>
-        </svg>
-        <span id="emergencyBtnText">EMERGENCY STOP</span>
-      </button>
+        <!-- 4. MODE 2: ANGLE POSITION CONTROLLER VIEW -->
+        <div id="positionPage" style="display: none;">
+          <!-- Angle Position Summary Card -->
+          <div class="sleek-card angle-summary-card">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--yellow-accent)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                <span class="section-label" style="margin: 0; color: var(--yellow-accent);">CURRENT ANGLE</span>
+              </div>
+              <div id="currentAngleVal" class="angle-large-value">0°</div>
+            </div>
+            <button id="btnZeroTare" class="btn-reset-zero">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
+              Reset to 0°
+            </button>
+          </div>
+
+          <!-- Target Angle Positioning Card -->
+          <div class="section-label" style="color: var(--yellow-accent);">TARGET ANGLE POSITIONING</div>
+          <div class="sleek-card" style="display: flex; flex-direction: column; gap: 12px;">
+            <div class="subtext-muted">Select a preset or enter target degrees:</div>
+
+            <!-- Preset Angle Quick Chips -->
+            <div class="chips-scroll">
+              <button class="angle-chip" data-deg="15">+15°</button>
+              <button class="angle-chip" data-deg="45">+45°</button>
+              <button class="angle-chip" data-deg="90">+90°</button>
+              <button class="angle-chip" data-deg="180">+180°</button>
+              <button class="angle-chip" data-deg="-45">-45°</button>
+              <button class="angle-chip" data-deg="-90">-90°</button>
+              <button class="angle-chip" data-deg="-180">-180°</button>
+            </div>
+
+            <div class="angle-input-row">
+              <input type="number" id="angleInputField" class="angle-input-field" value="90" placeholder="Angle (e.g. 90)">
+              <button id="btnMoveGo" class="btn-rotate">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                Rotate
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </section>
 
     </main>
 
