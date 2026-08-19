@@ -1,18 +1,12 @@
 /**
  * G28 STEPPER MOTOR CANVAS WIDGET
- * 190px — Starts at 0 RPM (completely idle).
+ * Responsive: reads canvas container size. Starts at 0 RPM.
  */
-
 class StepperMotorWidget {
   constructor(canvasId) {
     this.canvas = document.getElementById(canvasId);
     if (!this.canvas) return;
     this.ctx = this.canvas.getContext('2d');
-    this.size = 190;
-    const dpr = window.devicePixelRatio || 1;
-    this.canvas.width = this.size * dpr;
-    this.canvas.height = this.size * dpr;
-    this.ctx.scale(dpr, dpr);
 
     this.isRunning = false;
     this.isForward = true;
@@ -20,8 +14,22 @@ class StepperMotorWidget {
     this.currentSpeed = 0;
     this.rotationAngle = 0;
     this.lastTs = performance.now();
+
+    this._resize();
+    window.addEventListener('resize', () => this._resize());
+
     this._loop = this._loop.bind(this);
     requestAnimationFrame(this._loop);
+  }
+
+  _resize() {
+    // Size to the container (.motor-ring)
+    const rect = this.canvas.parentElement.getBoundingClientRect();
+    this.size = Math.min(rect.width, rect.height);
+    const dpr = window.devicePixelRatio || 1;
+    this.canvas.width = this.size * dpr;
+    this.canvas.height = this.size * dpr;
+    this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
   }
 
   updateState({ isRunning, isForward, isEmergencyStopped, speed }) {
@@ -44,7 +52,7 @@ class StepperMotorWidget {
   }
 
   _draw() {
-    const c = this.ctx, s = this.size, cx = s / 2, r = s / 2 - 14;
+    const c = this.ctx, s = this.size, cx = s / 2, r = s / 2 - (s * 0.074);
     c.clearRect(0, 0, s, s);
 
     // Stator poles
@@ -52,10 +60,11 @@ class StepperMotorWidget {
       : (this.isRunning && this.currentSpeed > 0
         ? (this.isForward ? '#00E5FF' : '#8B5CF6') : '#64748B');
     c.fillStyle = sc;
+    const dotR = s * 0.032;
     for (let i = 0; i < 4; i++) {
       const a = (i * Math.PI) / 2;
       c.beginPath();
-      c.arc(cx + r * Math.cos(a), cx + r * Math.sin(a), 6, 0, Math.PI * 2);
+      c.arc(cx + r * Math.cos(a), cx + r * Math.sin(a), dotR, 0, Math.PI * 2);
       c.fill();
     }
 
@@ -63,7 +72,7 @@ class StepperMotorWidget {
     c.save();
     c.translate(cx, cx);
     c.rotate(this.rotationAngle);
-    const rr = s * 0.55 / 2;
+    const rr = s * 0.275;
     c.beginPath();
     c.arc(0, 0, rr, 0, Math.PI * 2);
     const g = c.createLinearGradient(-rr, -rr, rr, rr);
@@ -77,19 +86,18 @@ class StepperMotorWidget {
 
     // Shaft notch
     const nc = this.isEmergencyStopped ? '#FF1744' : (this.isForward ? '#00E5FF' : '#8B5CF6');
+    const nw = s * 0.042, nh = s * 0.105;
     c.beginPath();
-    c.roundRect(-4, -rr + 6, 8, 20, 4);
+    c.roundRect(-nw / 2, -rr + s * 0.032, nw, nh, nw / 2);
     c.fillStyle = nc;
     c.fill();
 
     // Axle
     c.beginPath();
-    c.arc(0, 0, 12, 0, Math.PI * 2);
+    c.arc(0, 0, s * 0.063, 0, Math.PI * 2);
     c.fillStyle = '#64748B';
     c.fill();
-
     c.restore();
   }
 }
-
 window.StepperMotorWidget = StepperMotorWidget;

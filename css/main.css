@@ -1,6 +1,6 @@
 /* ==========================================================================
-   G28 STEPPER CONTROLLER — THEME
-   Exact colors and fonts from Flutter ArduinoBtTheme
+   G28 STEPPER CONTROLLER — THEME & LAYOUT
+   Responsive: stacked on mobile, side-by-side on desktop
    ========================================================================== */
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Orbitron:wght@600;700;800;900&display=swap');
@@ -25,59 +25,69 @@
   --font-body: 'Inter', sans-serif;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  -webkit-tap-highlight-color: transparent;
-}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
 body {
-  background-color: var(--bg-dark);
+  background: var(--bg-dark);
   color: var(--text-main);
   font-family: var(--font-body);
   min-height: 100vh;
-  display: flex;
-  justify-content: center;
 }
 
-/* Single centered column — identical on mobile and desktop */
+/* ── Shell ── */
 .app-shell {
-  width: 100%;
-  max-width: 480px;
+  max-width: 920px;
+  margin: 0 auto;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* AppBar */
+/* ── AppBar ── */
 .app-bar {
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 18px 20px;
-  border-bottom: 1px solid rgba(35, 47, 69, 0.5);
+  border-bottom: 1px solid rgba(35,47,69,.5);
 }
-
 .app-bar h1 {
   font-family: var(--font-header);
   font-size: 1rem;
   font-weight: 700;
   letter-spacing: 1.2px;
-  color: var(--text-main);
 }
 
-/* Scrollable body content */
+/* ── Body ── */
 .app-body {
   flex: 1;
-  overflow-y: auto;
-  padding: 16px 20px 32px 20px;
+  padding: 16px 20px 40px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
-/* Card base */
+/* ── Responsive Grid: motor left, controls right on desktop ── */
+.layout-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+@media (min-width: 720px) {
+  .layout-grid {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 24px;
+    align-items: start;
+  }
+  .left-col {
+    position: sticky;
+    top: 20px;
+  }
+}
+
+/* ── Card ── */
 .card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -85,16 +95,15 @@ body {
   padding: 16px;
 }
 
-/* Label style */
+/* ── Labels ── */
 .label-sm {
   font-family: var(--font-mono);
-  font-size: 0.69rem;
+  font-size: .69rem;
   font-weight: 600;
   color: var(--text-dim);
-  letter-spacing: 0.3px;
+  letter-spacing: .3px;
 }
-
 .sub-sm {
-  font-size: 0.69rem;
+  font-size: .69rem;
   color: var(--text-muted);
 }
