@@ -1,799 +1,576 @@
 /* ==========================================================================
    G28 STEPPER CONTROLLER — COMPONENT STYLES
-   Visualizers, Keypads, Dials, Oscilloscope, Terminal & Modals
+   Recreated 1:1 from the original Flutter UI components
    ========================================================================== */
 
-/* ==========================================================================
-   1. MOTOR CANVAS CONTAINER
-   ========================================================================== */
-.motor-visualizer-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  padding: 16px;
-  background: radial-gradient(circle at center, rgba(0, 229, 255, 0.04) 0%, transparent 70%);
-  border-radius: var(--border-radius-lg);
-  border: 1px dashed var(--border-subtle);
-  margin-bottom: 20px;
-}
-
-#motorCanvas {
-  max-width: 100%;
-  height: auto;
-  filter: drop-shadow(0 0 16px rgba(0, 229, 255, 0.15));
-  border-radius: 50%;
-  cursor: crosshair;
-}
-
-.motor-badge-overlay {
-  position: absolute;
-  bottom: 24px;
+/* 1. Connection Status Bar */
+.connection-bar {
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: rgba(6, 9, 17, 0.9);
-  border: 1px solid var(--border-main);
-  padding: 4px 14px;
-  border-radius: 20px;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--neon-cyan);
-  backdrop-filter: blur(8px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-}
-
-.motor-badge-overlay.reverse {
-  color: var(--neon-purple);
-  border-color: var(--neon-purple-glow);
-}
-
-.motor-badge-overlay.stopped {
-  color: var(--neon-red);
-  border-color: var(--neon-red-glow);
-}
-
-/* ==========================================================================
-   2. SPEED SLIDER & THROTTLE
-   ========================================================================== */
-.speed-control-box {
-  background: var(--bg-card-subtle);
-  border: 1px solid var(--border-main);
-  border-radius: var(--border-radius-md);
-  padding: 18px;
-  margin-bottom: 18px;
-}
-
-.speed-header {
-  display: flex;
   justify-content: space-between;
-  align-items: baseline;
-  margin-bottom: 12px;
+  padding: 12px 16px;
 }
 
-.speed-label {
-  font-family: var(--font-mono);
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
-.speed-readout {
-  font-family: var(--font-header);
-  font-size: 1.6rem;
-  font-weight: 800;
-  color: var(--neon-cyan);
-  text-shadow: 0 0 10px var(--neon-cyan-glow);
-}
-
-.cyber-slider-wrap {
-  position: relative;
-  margin: 12px 0 8px 0;
-}
-
-input[type="range"].cyber-slider {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 100%;
-  height: 8px;
-  background: #131d2e;
-  border-radius: 6px;
-  outline: none;
-  border: 1px solid var(--border-main);
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-input[type="range"].cyber-slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--neon-cyan);
-  cursor: pointer;
-  box-shadow: 0 0 14px var(--neon-cyan);
-  border: 2px solid #fff;
-  transition: transform 0.1s ease, box-shadow 0.2s ease;
-}
-
-input[type="range"].cyber-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.2);
-  box-shadow: 0 0 20px var(--neon-cyan);
-}
-
-input[type="range"].cyber-slider::-moz-range-thumb {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  background: var(--neon-cyan);
-  cursor: pointer;
-  box-shadow: 0 0 14px var(--neon-cyan);
-  border: 2px solid #fff;
-}
-
-.slider-ticks {
+.connection-info {
   display: flex;
-  justify-content: space-between;
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  color: var(--text-muted);
-  margin-top: 4px;
-}
-
-/* ==========================================================================
-   3. DIRECTION CONTROLS (FORWARD / REVERSE)
-   ========================================================================== */
-.direction-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  align-items: center;
   gap: 12px;
-  margin-bottom: 20px;
-}
-
-.dir-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 16px 12px;
-  background: var(--bg-card-subtle);
-  border: 2px solid var(--border-main);
-  border-radius: var(--border-radius-md);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.25s ease;
-  user-select: none;
-}
-
-.dir-btn .dir-icon {
-  font-size: 1.5rem;
-}
-
-.dir-btn .dir-name {
-  font-family: var(--font-header);
-  font-size: 0.85rem;
-  font-weight: 700;
-  letter-spacing: 1px;
-}
-
-.dir-btn .dir-cmd {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  color: var(--text-muted);
-}
-
-.dir-btn:hover {
-  border-color: var(--border-highlight);
-  color: var(--text-primary);
-}
-
-.dir-btn.active.fwd {
-  border-color: var(--neon-cyan);
-  background: var(--neon-cyan-dim);
-  color: var(--neon-cyan);
-  box-shadow: 0 0 20px var(--neon-cyan-dim);
-}
-
-.dir-btn.active.rev {
-  border-color: var(--neon-purple);
-  background: var(--neon-purple-dim);
-  color: var(--neon-purple);
-  box-shadow: 0 0 20px var(--neon-purple-dim);
-}
-
-/* ==========================================================================
-   4. ANGLE POSITION DIAL & COMPASS GAUGE
-   ========================================================================== */
-.dial-gauge-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  position: relative;
-  padding: 14px;
-  margin-bottom: 18px;
-  background: radial-gradient(circle at center, rgba(255, 145, 0, 0.04) 0%, transparent 70%);
-  border-radius: var(--border-radius-lg);
-  border: 1px dashed var(--border-subtle);
-}
-
-#dialCanvas {
-  max-width: 100%;
-  height: auto;
-  cursor: grab;
-}
-
-#dialCanvas:active {
-  cursor: grabbing;
-}
-
-.dial-center-readout {
-  position: absolute;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  pointer-events: none;
-}
-
-.target-deg-val {
-  font-family: var(--font-header);
-  font-size: 2rem;
-  font-weight: 900;
-  color: var(--neon-amber);
-  text-shadow: 0 0 15px var(--neon-amber-glow);
-}
-
-.actual-deg-val {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  font-weight: 600;
-}
-
-/* Preset angle chips */
-.preset-chips-wrap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.preset-chip {
-  padding: 6px 12px;
-  border-radius: 12px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-main);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 700;
-  color: var(--neon-amber);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  user-select: none;
-}
-
-.preset-chip:hover {
-  background: var(--neon-amber-dim);
-  border-color: var(--neon-amber);
-  transform: translateY(-1px);
-  box-shadow: 0 0 10px var(--neon-amber-dim);
-}
-
-.preset-chip:active {
-  transform: scale(0.95);
-}
-
-/* ==========================================================================
-   5. TACTICAL NUMERIC KEYPAD
-   ========================================================================== */
-.keypad-wrapper {
-  background: var(--bg-card-subtle);
-  border: 1px solid var(--border-main);
-  border-radius: var(--border-radius-md);
-  padding: 16px;
-  margin-bottom: 18px;
-}
-
-.keypad-display {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--bg-input);
-  border: 1px solid var(--border-main);
-  border-radius: var(--border-radius-sm);
-  padding: 10px 14px;
-  margin-bottom: 12px;
-}
-
-.keypad-label {
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
-  color: var(--text-muted);
-}
-
-.keypad-buffer {
-  font-family: var(--font-header);
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: var(--neon-amber);
-  text-shadow: 0 0 10px var(--neon-amber-glow);
-}
-
-.keypad-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.key-btn {
-  height: 48px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-main);
-  border-radius: var(--border-radius-sm);
-  color: var(--text-primary);
-  font-family: var(--font-header);
-  font-size: 1.1rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  user-select: none;
-}
-
-.key-btn:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: var(--border-highlight);
-}
-
-.key-btn:active {
-  transform: scale(0.95);
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.key-btn.clear {
-  color: var(--neon-red);
-  background: var(--neon-red-dim);
-  border-color: rgba(255, 23, 68, 0.3);
-}
-
-.key-btn.go {
-  background: var(--neon-amber);
-  color: var(--text-dark);
-  border-color: var(--neon-amber);
-  font-size: 0.95rem;
-  box-shadow: 0 0 15px var(--neon-amber-glow);
-}
-
-.key-btn.go:hover {
-  background: #ffaa33;
-  box-shadow: 0 0 25px var(--neon-amber-glow);
-}
-
-/* Jog Step Buttons */
-.jog-buttons-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-bottom: 14px;
-}
-
-.jog-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 8px 4px;
-  background: var(--bg-secondary);
-  border: 1px solid var(--border-main);
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  transition: all 0.2s ease;
-  user-select: none;
-}
-
-.jog-btn .jog-val {
-  font-family: var(--font-header);
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--neon-amber);
-}
-
-.jog-btn .jog-label {
-  font-family: var(--font-mono);
-  font-size: 0.6rem;
-  color: var(--text-muted);
-}
-
-.jog-btn:hover {
-  border-color: var(--neon-amber);
-  background: var(--neon-amber-dim);
-}
-
-.jog-btn:active {
-  transform: scale(0.95);
-}
-
-/* ==========================================================================
-   6. HERO EMERGENCY STOP BUTTON
-   ========================================================================== */
-.hero-emergency-btn {
-  width: 100%;
-  padding: 18px 24px;
-  background: var(--neon-red-dim);
-  border: 2px solid var(--neon-red);
-  border-radius: var(--border-radius-lg);
-  color: var(--neon-red);
-  font-family: var(--font-header);
-  font-size: 1rem;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  cursor: pointer;
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 0 15px rgba(255, 23, 68, 0.2);
-  user-select: none;
-  margin-top: 10px;
-}
-
-.hero-emergency-btn:hover {
-  background: var(--neon-red);
-  color: #fff;
-  box-shadow: var(--shadow-glow-red);
-  transform: translateY(-2px);
-}
-
-.hero-emergency-btn:active {
-  transform: translateY(1px);
-}
-
-.hero-emergency-btn.active {
-  background: var(--neon-red);
-  color: #fff;
-  animation: pulse-red 1s infinite;
-}
-
-/* ==========================================================================
-   7. OSCILLOSCOPE WAVEFORM CANVAS
-   ========================================================================== */
-.oscilloscope-box {
-  background: #04070d;
-  border: 1px solid var(--border-main);
-  border-radius: var(--border-radius-md);
-  padding: 12px;
-  margin-bottom: 16px;
-  position: relative;
-}
-
-#scopeCanvas {
-  width: 100%;
-  height: 120px;
-  display: block;
-}
-
-.scope-legend {
-  display: flex;
-  justify-content: space-around;
-  margin-top: 8px;
-  font-family: var(--font-mono);
-  font-size: 0.68rem;
-}
-
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.legend-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-/* ==========================================================================
-   8. LIVE SERIAL TERMINAL LOGGER
-   ========================================================================== */
-.terminal-box {
-  background: #04070d;
-  border: 1px solid var(--border-main);
-  border-radius: var(--border-radius-md);
-  display: flex;
-  flex-direction: column;
-  height: 280px;
+  flex: 1;
   overflow: hidden;
 }
 
-.terminal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 8px 12px;
-  background: var(--bg-secondary);
-  border-bottom: 1px solid var(--border-main);
+.status-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: var(--text-dim);
+  flex-shrink: 0;
+  transition: all 0.3s ease;
 }
 
-.terminal-title {
+.status-dot.connected {
+  background-color: var(--success-green);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+}
+
+.status-dot.connecting {
+  background-color: var(--warning-yellow);
+  box-shadow: 0 0 10px rgba(255, 193, 7, 0.6);
+}
+
+.status-text {
   font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--text-secondary);
+  font-size: 0.82rem;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.btn-pair-bt {
+  background: rgba(0, 229, 255, 0.15);
+  color: var(--primary-cyan);
+  border: none;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.terminal-tools {
-  display: flex;
-  gap: 8px;
-}
-
-.term-tool-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-family: var(--font-mono);
-  font-size: 0.7rem;
   cursor: pointer;
-  padding: 2px 6px;
-  border-radius: 4px;
+  transition: background 0.2s ease;
 }
 
-.term-tool-btn:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.05);
+.btn-pair-bt:hover {
+  background: rgba(0, 229, 255, 0.25);
 }
 
-.terminal-logs {
-  flex: 1;
-  padding: 10px 12px;
-  overflow-y: auto;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  line-height: 1.6;
-  color: #a0aec0;
-}
-
-.terminal-logs::-webkit-scrollbar {
-  width: 5px;
-}
-.terminal-logs::-webkit-scrollbar-thumb {
-  background: #1e293b;
-  border-radius: 4px;
-}
-
-.log-entry {
-  word-break: break-all;
-}
-
-.log-entry.tx {
-  color: var(--neon-cyan);
-}
-
-.log-entry.rx {
-  color: var(--neon-green);
-}
-
-.log-entry.warn {
-  color: var(--neon-amber);
-}
-
-.log-entry.err {
-  color: var(--neon-red);
-}
-
-.terminal-input-bar {
-  display: flex;
-  border-top: 1px solid var(--border-main);
-  background: var(--bg-secondary);
-}
-
-.term-input {
-  flex: 1;
+.btn-disconnect {
   background: transparent;
+  color: var(--danger-red);
   border: none;
   padding: 8px 12px;
   font-family: var(--font-mono);
   font-size: 0.78rem;
-  color: var(--text-primary);
-  outline: none;
-}
-
-.term-send-btn {
-  background: var(--neon-cyan-dim);
-  border: none;
-  border-left: 1px solid var(--border-main);
-  color: var(--neon-cyan);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 0 14px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
-.term-send-btn:hover {
-  background: var(--neon-cyan);
-  color: var(--text-dark);
-}
-
-/* ==========================================================================
-   9. MODALS & DRAWERS
-   ========================================================================== */
-.modal-backdrop {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(3, 5, 10, 0.85);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  z-index: 1000;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.modal-backdrop.active {
-  display: flex;
-}
-
-.modal-dialog {
-  background: var(--bg-card-elevated);
-  border: 1px solid var(--border-main);
-  border-radius: var(--border-radius-lg);
-  max-width: 580px;
-  width: 100%;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
-  overflow: hidden;
-  animation: modal-pop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes modal-pop {
-  from { opacity: 0; transform: scale(0.92) translateY(10px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border-main);
-  background: var(--bg-secondary);
-}
-
-.modal-header h2 {
-  font-family: var(--font-header);
-  font-size: 1rem;
-  color: var(--text-primary);
-  letter-spacing: 1px;
-}
-
-.modal-close {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 4px 8px;
-  border-radius: 6px;
-}
-
-.modal-close:hover {
-  color: var(--text-primary);
-  background: rgba(255,255,255,0.06);
-}
-
-.modal-body {
-  padding: 20px;
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-.connection-options-grid {
+/* 2. Mode Switching Tabs */
+.mode-segmented-tabs {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 14px;
-  margin-bottom: 20px;
+  background-color: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 4px;
 }
 
-.conn-card {
-  background: var(--bg-card-subtle);
-  border: 2px solid var(--border-main);
-  border-radius: var(--border-radius-md);
-  padding: 18px 14px;
-  text-align: center;
+.mode-tab {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 8px;
+  border-radius: 13px;
+  border: 2px solid transparent;
+  background: transparent;
+  color: var(--text-dim);
+  font-family: var(--font-header);
+  font-size: 0.75rem;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.conn-card:hover {
-  border-color: var(--neon-cyan);
-  background: var(--neon-cyan-dim);
-  transform: translateY(-2px);
+.mode-tab.active.velocity {
+  background: rgba(0, 229, 255, 0.15);
+  border-color: var(--primary-cyan);
+  color: var(--primary-cyan);
 }
 
-.conn-card .conn-icon {
-  font-size: 2rem;
-  color: var(--neon-cyan);
-  margin-bottom: 8px;
+.mode-tab.active.position {
+  background: rgba(255, 193, 7, 0.15);
+  border-color: var(--warning-yellow);
+  color: var(--warning-yellow);
 }
 
-.conn-card h4 {
+/* 3. Emergency Alert Banner */
+.emergency-banner {
+  display: none;
+  padding: 12px 16px;
+  background: rgba(255, 23, 68, 0.15);
+  border: 2px solid var(--danger-red);
+  border-radius: 16px;
+  align-items: center;
+  gap: 12px;
+}
+
+.emergency-banner.active {
+  display: flex;
+}
+
+.emergency-banner-icon {
+  font-size: 1.6rem;
+  color: var(--danger-red);
+}
+
+.emergency-banner-title {
   font-family: var(--font-header);
   font-size: 0.85rem;
-  margin-bottom: 4px;
+  color: var(--danger-red);
+  font-weight: 700;
 }
 
-.conn-card p {
+.emergency-banner-sub {
   font-family: var(--font-body);
   font-size: 0.72rem;
   color: var(--text-muted);
 }
 
-/* Specs Table in Drawer */
-.specs-table {
+/* 4. Stepper Motor Visualizer */
+.motor-wrapper {
+  display: flex;
+  justify-content: center;
+  margin: 4px 0 10px 0;
+}
+
+.motor-container {
+  width: 190px;
+  height: 190px;
+  border-radius: 50%;
+  background-color: var(--card-bg);
+  border: 3px solid var(--card-border);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.motor-container.running-fwd {
+  border-color: var(--primary-cyan);
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+}
+
+.motor-container.running-rev {
+  border-color: var(--accent-purple);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+.motor-container.halted {
+  border-color: var(--danger-red);
+  box-shadow: 0 0 20px rgba(255, 23, 68, 0.4);
+}
+
+#motorCanvas {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  border-collapse: collapse;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.motor-status-pill {
+  position: absolute;
+  bottom: 14px;
+  padding: 4px 10px;
+  background: rgba(11, 15, 25, 0.9);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
   font-family: var(--font-mono);
-  font-size: 0.78rem;
-  margin-top: 10px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  z-index: 10;
 }
 
-.specs-table td {
-  padding: 8px 10px;
-  border-bottom: 1px solid var(--border-subtle);
+.motor-status-pill.fwd {
+  color: var(--primary-cyan);
 }
 
-.specs-table td:first-child {
-  color: var(--text-muted);
+.motor-status-pill.rev {
+  color: var(--accent-purple);
 }
 
-.specs-table td:last-child {
-  color: var(--neon-cyan);
-  text-align: right;
-  font-weight: 600;
+.motor-status-pill.halted {
+  color: var(--danger-red);
+  border-color: var(--danger-red);
 }
 
-/* Toast Notifications */
-.toast-container {
-  position: fixed;
-  bottom: 20px;
-  right: 20px;
-  z-index: 9999;
+/* 5. Info Cards Row */
+.info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.info-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.info-card-value {
+  font-family: var(--font-header);
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+/* 6. Speed Slider Card */
+.speed-slider-card {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  pointer-events: none;
 }
 
-.cyber-toast {
-  background: var(--bg-card-elevated);
-  border-left: 4px solid var(--neon-cyan);
-  border-top: 1px solid var(--border-main);
-  border-right: 1px solid var(--border-main);
-  border-bottom: 1px solid var(--border-main);
-  padding: 12px 18px;
-  border-radius: var(--border-radius-sm);
+.speed-slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.speed-value-cyan {
+  font-family: var(--font-header);
+  font-size: 1.15rem;
+  color: var(--primary-cyan);
+  font-weight: 700;
+}
+
+input[type="range"].mobile-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  background: var(--card-border);
+  border-radius: 4px;
+  outline: none;
+}
+
+input[type="range"].mobile-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--primary-cyan);
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+}
+
+input[type="range"].mobile-slider::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--primary-cyan);
+  cursor: pointer;
+}
+
+/* 7. Direction Control Buttons */
+.direction-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.direction-btn {
+  background: transparent;
+  border: 2px solid var(--card-border);
+  border-radius: 16px;
+  padding: 16px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.direction-btn .dir-icon {
+  font-size: 1.4rem;
+  color: var(--text-dim);
+}
+
+.direction-btn .dir-label {
+  font-family: var(--font-header);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-dim);
+}
+
+.direction-btn .dir-sub {
   font-family: var(--font-mono);
-  font-size: 0.8rem;
-  color: var(--text-primary);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-  animation: toast-in 0.3s ease, toast-out 0.3s ease 2.7s forwards;
-  pointer-events: auto;
+  font-size: 0.65rem;
+  color: var(--text-muted);
 }
 
-@keyframes toast-in {
-  from { opacity: 0; transform: translateX(50px); }
-  to { opacity: 1; transform: translateX(0); }
+.direction-btn.active.fwd {
+  background: rgba(0, 229, 255, 0.15);
+  border-color: var(--primary-cyan);
+}
+.direction-btn.active.fwd .dir-icon,
+.direction-btn.active.fwd .dir-label {
+  color: var(--primary-cyan);
 }
 
-@keyframes toast-out {
-  from { opacity: 1; transform: translateX(0); }
-  to { opacity: 0; transform: translateX(50px); }
+.direction-btn.active.rev {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: var(--accent-purple);
+}
+.direction-btn.active.rev .dir-icon,
+.direction-btn.active.rev .dir-label {
+  color: var(--accent-purple);
+}
+
+/* 8. Angle Go Mode Components */
+.angle-summary-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.angle-large-value {
+  font-family: var(--font-header);
+  font-size: 1.6rem;
+  color: var(--warning-yellow);
+  font-weight: 800;
+  margin-top: 4px;
+}
+
+.btn-zero-tare {
+  background: transparent;
+  border: 1px solid var(--warning-yellow);
+  color: var(--warning-yellow);
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-zero-tare:hover {
+  background: rgba(255, 193, 7, 0.15);
+}
+
+.chips-scroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  margin: 10px 0 14px 0;
+}
+
+.chips-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.angle-chip {
+  background-color: var(--bg-dark);
+  border: 1px solid var(--card-border);
+  color: var(--warning-yellow);
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 16px;
+  white-space: nowrap;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.angle-chip:hover {
+  border-color: var(--warning-yellow);
+  background: rgba(255, 193, 7, 0.1);
+}
+
+.angle-input-row {
+  display: flex;
+  gap: 10px;
+}
+
+.angle-input-field {
+  flex: 1;
+  background-color: var(--bg-dark);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 12px 16px;
+  color: var(--text-main);
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  outline: none;
+}
+
+.angle-input-field:focus {
+  border-color: var(--warning-yellow);
+}
+
+.btn-move-go {
+  background-color: var(--warning-yellow);
+  color: var(--bg-dark);
+  border: none;
+  border-radius: 14px;
+  padding: 12px 20px;
+  font-family: var(--font-header);
+  font-size: 0.85rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.btn-move-go:hover {
+  opacity: 0.9;
+}
+
+/* 9. Hero Emergency Stop Button */
+.hero-emergency-btn {
+  width: 100%;
+  padding: 18px;
+  border-radius: 20px;
+  border: 2px solid var(--danger-red);
+  background: rgba(255, 23, 68, 0.15);
+  color: var(--danger-red);
+  font-family: var(--font-header);
+  font-size: 0.92rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 6px;
+}
+
+.hero-emergency-btn:hover {
+  background: var(--danger-red);
+  color: #fff;
+}
+
+.hero-emergency-btn.active {
+  background: var(--danger-red);
+  color: #fff;
+  box-shadow: 0 0 20px rgba(255, 23, 68, 0.6);
+}
+
+/* 10. Pair BT Bottom Sheet Modal */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 100;
+  display: none;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal-sheet {
+  background-color: var(--bg-dark);
+  border-top-left-radius: 24px;
+  border-top-right-radius: 24px;
+  border-top: 1.5px solid var(--card-border);
+  width: 100%;
+  max-width: 460px;
+  max-height: 80vh;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  animation: slide-up 0.25s ease-out;
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.modal-sheet-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.device-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  overflow-y: auto;
+}
+
+.device-tile {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+}
+
+.device-tile-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.device-tile-name {
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  color: var(--text-main);
+}
+
+.device-tile-sub {
+  font-family: var(--font-body);
+  font-size: 0.72rem;
+  color: var(--text-muted);
+}
+
+.btn-device-connect {
+  background: rgba(0, 229, 255, 0.15);
+  color: var(--primary-cyan);
+  border: none;
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
 }

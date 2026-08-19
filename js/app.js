@@ -1,172 +1,146 @@
 /**
- * G28 STEPPER MOTOR WEB CONTROLLER — MASTER APPLICATION CONTROLLER
- * Orchestrates UI interactions, hardware services, simulation engine,
- * visualizers, audio synthesis, and live telemetry data feeds.
+ * G28 STEPPER CONTROLLER — MOBILE & DESKTOP APP SCRIPT
+ * Faithful 1:1 reproduction of the Flutter ArduinoBtProvider & MainArduinoBtScreen logic.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // App State
+  // App State matching ArduinoBtProvider
   const state = {
-    mode: 1, // 1 = Velocity, 2 = Position
-    speed: 40, // RPM (0-80)
+    activeMode: 1, // 1 = Velocity Mode, 2 = Position Mode
+    currentSpeedRpm: 40,
     directionForward: true,
     isEmergencyStopped: false,
-    currentAngle: 0,
-    targetAngle: 90,
-    keypadBuffer: "90",
-    connectionType: 'simulated', // 'simulated', 'serial', 'ble'
+    currentAngleDegrees: 0,
     isConnected: true,
-    isAudioMuted: true
+    connectedDeviceName: "NEMA17-Controller (Simulated)"
   };
 
-  // DOM Elements
+  // DOM References
   const els = {
-    // Header & Badges
-    connectionStatusPill: document.getElementById('connectionStatusPill'),
-    connectionStatusText: document.getElementById('connectionStatusText'),
-    btnOpenConnectModal: document.getElementById('btnOpenConnectModal'),
-    btnAudioToggle: document.getElementById('btnAudioToggle'),
-    btnOpenSpecsModal: document.getElementById('btnOpenSpecsModal'),
+    statusDot: document.getElementById('statusDot'),
+    statusText: document.getElementById('statusText'),
+    btnPairBt: document.getElementById('btnPairBt'),
+    btnDisconnect: document.getElementById('btnDisconnect'),
 
-    // Mode Tabs & Emergency Banner
-    modeTabVelocity: document.getElementById('modeTabVelocity'),
-    modeTabPosition: document.getElementById('modeTabPosition'),
-    velocityModePanel: document.getElementById('velocityModePanel'),
-    positionModePanel: document.getElementById('positionModePanel'),
+    tabVelocity: document.getElementById('tabVelocity'),
+    tabPosition: document.getElementById('tabPosition'),
+    velocityPage: document.getElementById('velocityPage'),
+    positionPage: document.getElementById('positionPage'),
     emergencyBanner: document.getElementById('emergencyBanner'),
 
-    // Telemetry Display Readouts
-    telemetrySpeedVal: document.getElementById('telemetrySpeedVal'),
-    telemetryDirVal: document.getElementById('telemetryDirVal'),
-    telemetryAngleVal: document.getElementById('telemetryAngleVal'),
-    telemetryModeVal: document.getElementById('telemetryModeVal'),
-    motorStatusBadge: document.getElementById('motorStatusBadge'),
+    motorBox: document.getElementById('motorBox'),
+    motorPill: document.getElementById('motorPill'),
 
-    // Velocity Mode Controls
+    motorSpeedVal: document.getElementById('motorSpeedVal'),
+    dirIcon: document.getElementById('dirIcon'),
+    dirVal: document.getElementById('dirVal'),
+    dirCmdSub: document.getElementById('dirCmdSub'),
+
+    sliderReadout: document.getElementById('sliderReadout'),
     speedSlider: document.getElementById('speedSlider'),
-    speedReadout: document.getElementById('speedReadout'),
-    btnDirFwd: document.getElementById('btnDirFwd'),
-    btnDirRev: document.getElementById('btnDirRev'),
+    btnFwd: document.getElementById('btnFwd'),
+    btnRev: document.getElementById('btnRev'),
 
-    // Position Mode Controls
-    targetAngleReadout: document.getElementById('targetAngleReadout'),
-    actualAngleReadout: document.getElementById('actualAngleReadout'),
-    keypadBufferDisplay: document.getElementById('keypadBufferDisplay'),
+    currentAngleVal: document.getElementById('currentAngleVal'),
     btnZeroTare: document.getElementById('btnZeroTare'),
+    angleInputField: document.getElementById('angleInputField'),
+    btnMoveGo: document.getElementById('btnMoveGo'),
 
-    // Emergency Stop
     btnHeroEmergencyStop: document.getElementById('btnHeroEmergencyStop'),
+    emergencyBtnText: document.getElementById('emergencyBtnText'),
 
-    // Terminal
-    terminalLogs: document.getElementById('terminalLogs'),
-    termCommandInput: document.getElementById('termCommandInput'),
-    btnTermSend: document.getElementById('btnTermSend'),
-    btnTermClear: document.getElementById('btnTermClear'),
-    btnTermCopy: document.getElementById('btnTermCopy'),
-
-    // Modals
-    connectModal: document.getElementById('connectModal'),
-    specsModal: document.getElementById('specsModal'),
-    btnCloseConnectModal: document.getElementById('btnCloseConnectModal'),
-    btnCloseSpecsModal: document.getElementById('btnCloseSpecsModal'),
-    btnSelectSimulated: document.getElementById('btnSelectSimulated'),
-    btnSelectWebSerial: document.getElementById('btnSelectWebSerial'),
-    btnSelectWebBle: document.getElementById('btnSelectWebBle'),
-
-    // Toasts
-    toastContainer: document.getElementById('toastContainer')
+    modalOverlay: document.getElementById('modalOverlay'),
+    btnCloseModal: document.getElementById('btnCloseModal'),
+    btnConnectSim: document.getElementById('btnConnectSim'),
+    btnConnectSerial: document.getElementById('btnConnectSerial')
   };
 
-  // Toast notification helper
-  function showToast(msg) {
-    if (!els.toastContainer) return;
-    const toast = document.createElement('div');
-    toast.className = 'cyber-toast';
-    toast.textContent = msg;
-    els.toastContainer.appendChild(toast);
-    setTimeout(() => {
-      if (toast.parentNode) toast.parentNode.removeChild(toast);
-    }, 3000);
-  }
+  // Stepper Motor Canvas Widget
+  const motorWidget = new StepperMotorWidget('motorCanvas');
 
-  // Logger helper
-  function addTerminalLog(msg) {
-    if (!els.terminalLogs) return;
-    const line = document.createElement('div');
-    line.className = 'log-entry';
-
-    const timestamp = new Date().toTimeString().split(' ')[0];
-    if (msg.includes('[TX]')) {
-      line.className += ' tx';
-    } else if (msg.includes('[RX]')) {
-      line.className += ' rx';
-    } else if (msg.includes('[ERR]') || msg.includes('EMERGENCY')) {
-      line.className += ' err';
-    } else if (msg.includes('[SIM]') || msg.includes('[BLE]') || msg.includes('[SERIAL]')) {
-      line.className += ' warn';
-    }
-
-    line.textContent = `[${timestamp}] ${msg}`;
-    els.terminalLogs.appendChild(line);
-
-    // Keep log max 250 entries
-    while (els.terminalLogs.children.length > 250) {
-      els.terminalLogs.removeChild(els.terminalLogs.firstChild);
-    }
-    els.terminalLogs.scrollTop = els.terminalLogs.scrollHeight;
-  }
-
-  // Initialize Visualizers
-  const motorCanvas = new StepperMotorCanvas('motorCanvas');
-  const dialGauge = new TargetAngleDial('dialCanvas', (newAngle) => {
-    state.targetAngle = newAngle;
-    state.keypadBuffer = newAngle.toString();
-    updatePositionUI();
-  });
-  const oscilloscope = new StepperOscilloscope('scopeCanvas');
-
-  // Initialize Hardware & Simulation Engines
-  const handleTelemetryUpdate = (telemetry) => {
-    state.currentAngle = telemetry.angle;
+  // Telemetry Handler from Simulated Hardware or Real Serial
+  function handleTelemetry(telemetry) {
+    state.currentAngleDegrees = telemetry.angle;
     state.isEmergencyStopped = telemetry.emergencyStopped;
     state.directionForward = telemetry.direction === 1;
 
-    // Update canvas visualizers
-    motorCanvas.updateState({
-      angle: telemetry.angle,
-      speed: telemetry.speed,
-      isForward: state.directionForward,
-      isRunning: telemetry.running,
-      isEmergencyStopped: state.isEmergencyStopped
-    });
+    // Update UI elements
+    updateUI();
+  }
 
-    dialGauge.setCurrentAngle(telemetry.angle);
+  // Hardware and Simulation Engines
+  const mockEngine = new MockHardwareEngine({
+    onTelemetry: handleTelemetry,
+    onLog: () => {},
+    onPhaseStep: () => {}
+  });
 
-    // Update audio synthesis
-    if (window.stepperAudio) {
-      window.stepperAudio.setMotorSpeed(telemetry.speed, telemetry.running, state.isEmergencyStopped);
+  const serialService = new WebSerialService({
+    onTelemetry: handleTelemetry,
+    onLog: () => {},
+    onStateChange: (connState) => {
+      state.isConnected = connState === 'connected';
+      state.connectedDeviceName = state.isConnected ? "Arduino USB Serial" : "";
+      updateConnectionBar();
+    }
+  });
+
+  function sendCommand(cmd) {
+    if (serialService.isConnected) {
+      serialService.sendCommand(cmd);
+    } else {
+      mockEngine.sendCommand(cmd);
+    }
+  }
+
+  // Update UI to match current state
+  function updateUI() {
+    // 1. Motor Speed Display
+    if (els.motorSpeedVal) {
+      els.motorSpeedVal.textContent = state.isEmergencyStopped ? "0 RPM" : `${state.currentSpeedRpm} RPM`;
     }
 
-    // Update Telemetry Header & Tile readouts
-    if (els.telemetrySpeedVal) els.telemetrySpeedVal.textContent = `${telemetry.speed} RPM`;
-    if (els.telemetryDirVal) els.telemetryDirVal.textContent = state.directionForward ? 'FORWARD' : 'REVERSE';
-    if (els.telemetryAngleVal) els.telemetryAngleVal.textContent = `${telemetry.angle}°`;
-    if (els.telemetryModeVal) els.telemetryModeVal.textContent = telemetry.mode === 1 ? 'VELOCITY' : 'POSITION';
+    // 2. Direction Info Display
+    if (els.dirVal) {
+      els.dirVal.textContent = state.directionForward ? "FORWARD" : "REVERSE";
+      els.dirVal.style.color = state.directionForward ? "var(--primary-cyan)" : "var(--accent-purple)";
+    }
+    if (els.dirCmdSub) {
+      els.dirCmdSub.textContent = state.directionForward ? "Command: 'F'" : "Command: 'R'";
+    }
 
-    if (els.motorStatusBadge) {
+    // 3. Current Angle Display
+    if (els.currentAngleVal) {
+      els.currentAngleVal.textContent = `${state.currentAngleDegrees}°`;
+    }
+
+    // 4. Motor Widget Visualizer State
+    const isRunning = state.isConnected && !state.isEmergencyStopped && (state.activeMode === 1 ? state.currentSpeedRpm > 0 : true);
+
+    motorWidget.updateState({
+      isRunning: isRunning,
+      isForward: state.directionForward,
+      isEmergencyStopped: state.isEmergencyStopped,
+      speed: state.currentSpeedRpm
+    });
+
+    if (els.motorBox && els.motorPill) {
       if (state.isEmergencyStopped) {
-        els.motorStatusBadge.textContent = 'HALTED';
-        els.motorStatusBadge.className = 'motor-badge-overlay stopped';
-      } else if (telemetry.running) {
-        els.motorStatusBadge.textContent = state.directionForward ? 'CW (FWD)' : 'CCW (REV)';
-        els.motorStatusBadge.className = `motor-badge-overlay ${state.directionForward ? '' : 'reverse'}`;
+        els.motorBox.className = 'motor-container halted';
+        els.motorPill.textContent = 'HALTED';
+        els.motorPill.className = 'motor-status-pill halted';
+      } else if (isRunning) {
+        els.motorBox.className = `motor-container ${state.directionForward ? 'running-fwd' : 'running-rev'}`;
+        els.motorPill.textContent = state.directionForward ? 'CW (FWD)' : 'CCW (REV)';
+        els.motorPill.className = `motor-status-pill ${state.directionForward ? 'fwd' : 'rev'}`;
       } else {
-        els.motorStatusBadge.textContent = 'IDLE';
-        els.motorStatusBadge.className = 'motor-badge-overlay';
+        els.motorBox.className = 'motor-container';
+        els.motorPill.textContent = 'IDLE';
+        els.motorPill.className = 'motor-status-pill';
       }
     }
 
-    // Update emergency banner
+    // 5. Emergency Banner
     if (els.emergencyBanner) {
       if (state.isEmergencyStopped) {
         els.emergencyBanner.classList.add('active');
@@ -175,291 +149,156 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    if (els.btnHeroEmergencyStop) {
+    // 6. Emergency Stop Hero Button
+    if (els.btnHeroEmergencyStop && els.emergencyBtnText) {
       if (state.isEmergencyStopped) {
         els.btnHeroEmergencyStop.classList.add('active');
-        els.btnHeroEmergencyStop.innerHTML = `<span style="font-size:1.4rem;">⚠️</span> RESUME OPERATION (SEND 'S')`;
+        els.emergencyBtnText.textContent = "RESUME OPERATION (SEND 'S')";
       } else {
         els.btnHeroEmergencyStop.classList.remove('active');
-        els.btnHeroEmergencyStop.innerHTML = `<span style="font-size:1.4rem;">⛔</span> EMERGENCY STOP (SEND 'S')`;
+        els.emergencyBtnText.textContent = "EMERGENCY STOP (SEND 'S')";
       }
     }
-  };
 
-  const mockEngine = new MockHardwareEngine({
-    onTelemetry: handleTelemetryUpdate,
-    onLog: addTerminalLog,
-    onPhaseStep: (phase, isRunning) => {
-      oscilloscope.updatePhase(phase, isRunning);
-    }
-  });
-
-  const serialService = new WebSerialService({
-    onTelemetry: handleTelemetryUpdate,
-    onLog: addTerminalLog,
-    onStateChange: (connState) => {
-      state.isConnected = connState === 'connected';
-      updateConnectionPill();
-    }
-  });
-
-  const bleService = new WebBleService({
-    onTelemetry: handleTelemetryUpdate,
-    onLog: addTerminalLog,
-    onStateChange: (connState) => {
-      state.isConnected = connState === 'connected';
-      updateConnectionPill();
-    }
-  });
-
-  // Central Command Dispatcher
-  function sendHardwareCommand(cmd) {
-    if (window.stepperAudio) window.stepperAudio.playClickSound();
-
-    if (state.connectionType === 'simulated') {
-      mockEngine.sendCommand(cmd);
-    } else if (state.connectionType === 'serial' && serialService.isConnected) {
-      serialService.sendCommand(cmd);
-    } else if (state.connectionType === 'ble' && bleService.isConnected) {
-      const char = cmd.charAt(0).toUpperCase();
-      if (char === 'V') bleService.sendSpeed(parseInt(cmd.substring(1)) || 0);
-      else if (char === 'F') bleService.sendDirection(true);
-      else if (char === 'R') bleService.sendDirection(false);
-      else if (char === 'G') bleService.sendTargetPosition(parseInt(cmd.substring(1)) || 0);
-    } else {
-      addTerminalLog(`[WARN] Not connected. Operating in simulated mode.`);
-      mockEngine.sendCommand(cmd);
-    }
-  }
-
-  // UI Event Bindings: Mode Switching
-  function switchMode(newMode) {
-    state.mode = newMode;
-    if (newMode === 1) {
-      els.modeTabVelocity.classList.add('active', 'velocity');
-      els.modeTabPosition.classList.remove('active', 'position');
-      els.velocityModePanel.style.display = 'block';
-      els.positionModePanel.style.display = 'none';
-      sendHardwareCommand('M1');
-      showToast("Switched to Velocity Mode");
-    } else {
-      els.modeTabPosition.classList.add('active', 'position');
-      els.modeTabVelocity.classList.remove('active', 'velocity');
-      els.positionModePanel.style.display = 'block';
-      els.velocityModePanel.style.display = 'none';
-      sendHardwareCommand('M2');
-      showToast("Switched to Angle Go Mode");
-    }
-  }
-
-  els.modeTabVelocity.addEventListener('click', () => switchMode(1));
-  els.modeTabPosition.addEventListener('click', () => switchMode(2));
-
-  // Speed Slider Debounced Control
-  let speedDebounceTimer = null;
-  els.speedSlider.addEventListener('input', (e) => {
-    const val = parseInt(e.target.value) || 0;
-    state.speed = val;
-    els.speedReadout.textContent = `${val} RPM`;
-
-    clearTimeout(speedDebounceTimer);
-    speedDebounceTimer = setTimeout(() => {
-      sendHardwareCommand(`V${val}`);
-    }, 100);
-  });
-
-  // Direction Controls
-  els.btnDirFwd.addEventListener('click', () => {
-    state.directionForward = true;
-    els.btnDirFwd.classList.add('active', 'fwd');
-    els.btnDirRev.classList.remove('active', 'rev');
-    sendHardwareCommand('F');
-  });
-
-  els.btnDirRev.addEventListener('click', () => {
-    state.directionForward = false;
-    els.btnDirRev.classList.add('active', 'rev');
-    els.btnDirFwd.classList.remove('active', 'fwd');
-    sendHardwareCommand('R');
-  });
-
-  // Emergency Stop Toggle
-  els.btnHeroEmergencyStop.addEventListener('click', () => {
-    if (window.stepperAudio) window.stepperAudio.playEmergencyAlarm();
-    sendHardwareCommand('S');
-  });
-
-  // Position Mode: Keypad Inputs
-  function updatePositionUI() {
-    if (els.targetAngleReadout) els.targetAngleReadout.textContent = `${state.targetAngle}°`;
-    if (els.keypadBufferDisplay) els.keypadBufferDisplay.textContent = `${state.keypadBuffer}°`;
-  }
-
-  document.querySelectorAll('.key-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const key = btn.dataset.key;
-      if (key === 'C') {
-        state.keypadBuffer = "0";
-      } else if (key === 'GO') {
-        const parsed = parseInt(state.keypadBuffer) || 0;
-        state.targetAngle = ((parsed % 360) + 360) % 360;
-        dialGauge.setTargetAngle(state.targetAngle);
-        sendHardwareCommand(`G${state.targetAngle}`);
-        showToast(`Moving to ${state.targetAngle}°`);
+    // 7. Direction Buttons
+    if (els.btnFwd && els.btnRev) {
+      if (state.directionForward && !state.isEmergencyStopped) {
+        els.btnFwd.classList.add('active', 'fwd');
+        els.btnRev.classList.remove('active', 'rev');
+      } else if (!state.directionForward && !state.isEmergencyStopped) {
+        els.btnRev.classList.add('active', 'rev');
+        els.btnFwd.classList.remove('active', 'fwd');
       } else {
-        if (state.keypadBuffer === "0") {
-          state.keypadBuffer = key;
-        } else if (state.keypadBuffer.length < 5) {
-          state.keypadBuffer += key;
-        }
+        els.btnFwd.classList.remove('active', 'fwd');
+        els.btnRev.classList.remove('active', 'rev');
       }
-      updatePositionUI();
-      if (window.stepperAudio) window.stepperAudio.playClickSound();
-    });
+    }
+  }
+
+  function updateConnectionBar() {
+    if (state.isConnected) {
+      els.statusDot.className = 'status-dot connected';
+      els.statusText.textContent = `Connected: ${state.connectedDeviceName}`;
+      els.btnPairBt.style.display = 'none';
+      els.btnDisconnect.style.display = 'block';
+    } else {
+      els.statusDot.className = 'status-dot';
+      els.statusText.textContent = 'Disconnected';
+      els.btnPairBt.style.display = 'flex';
+      els.btnDisconnect.style.display = 'none';
+    }
+  }
+
+  // Mode Switch Tabs
+  function setOperatingMode(mode) {
+    state.activeMode = mode;
+    if (mode === 1) {
+      els.tabVelocity.classList.add('active', 'velocity');
+      els.tabPosition.classList.remove('active', 'position');
+      els.velocityPage.style.display = 'flex';
+      els.positionPage.style.display = 'none';
+      sendCommand('M1');
+    } else {
+      els.tabPosition.classList.add('active', 'position');
+      els.tabVelocity.classList.remove('active', 'velocity');
+      els.positionPage.style.display = 'flex';
+      els.velocityPage.style.display = 'none';
+      sendCommand('M2');
+    }
+    updateUI();
+  }
+
+  els.tabVelocity.addEventListener('click', () => setOperatingMode(1));
+  els.tabPosition.addEventListener('click', () => setOperatingMode(2));
+
+  // Speed Slider
+  let debounceTimer = null;
+  els.speedSlider.addEventListener('input', (e) => {
+    if (state.isEmergencyStopped) return;
+    const rpm = parseInt(e.target.value) || 0;
+    state.currentSpeedRpm = rpm;
+    els.sliderReadout.textContent = `${rpm} RPM`;
+    updateUI();
+
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      sendCommand(`V${rpm}`);
+    }, 150);
   });
 
-  // Jog Step Buttons (+1, +10, -1, -10)
-  document.querySelectorAll('.jog-btn').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const step = parseInt(btn.dataset.step) || 0;
-      let newTarget = (state.targetAngle + step) % 360;
-      if (newTarget < 0) newTarget += 360;
-      state.targetAngle = newTarget;
-      state.keypadBuffer = newTarget.toString();
-      dialGauge.setTargetAngle(newTarget);
-      updatePositionUI();
-      sendHardwareCommand(`G${newTarget}`);
-    });
+  // Direction Buttons
+  els.btnFwd.addEventListener('click', () => {
+    state.directionForward = true;
+    updateUI();
+    sendCommand('F');
+  });
+
+  els.btnRev.addEventListener('click', () => {
+    state.directionForward = false;
+    updateUI();
+    sendCommand('R');
   });
 
   // Preset Angle Chips
-  document.querySelectorAll('.preset-chip').forEach((chip) => {
+  document.querySelectorAll('.angle-chip').forEach((chip) => {
     chip.addEventListener('click', () => {
-      const angle = parseInt(chip.dataset.angle) || 0;
-      state.targetAngle = ((angle % 360) + 360) % 360;
-      state.keypadBuffer = state.targetAngle.toString();
-      dialGauge.setTargetAngle(state.targetAngle);
-      updatePositionUI();
-      sendHardwareCommand(`G${state.targetAngle}`);
-      showToast(`Target set to ${state.targetAngle}°`);
+      if (state.isEmergencyStopped) return;
+      const deg = parseInt(chip.dataset.deg) || 0;
+      els.angleInputField.value = deg.toString();
+      sendCommand(`G${deg}`);
     });
   });
 
-  // Zero Tare Origin
+  // Move Go Button
+  els.btnMoveGo.addEventListener('click', () => {
+    if (state.isEmergencyStopped) return;
+    const deg = parseInt(els.angleInputField.value.trim()) || 0;
+    sendCommand(`G${deg}`);
+  });
+
+  // Zero Tare
   els.btnZeroTare.addEventListener('click', () => {
-    if (window.stepperAudio) window.stepperAudio.playTareSound();
-    sendHardwareCommand('Z');
-    dialGauge.setTargetAngle(0);
-    state.targetAngle = 0;
-    state.keypadBuffer = "0";
-    updatePositionUI();
-    showToast("Origin zeroed (0° tare)");
+    state.currentAngleDegrees = 0;
+    updateUI();
+    sendCommand('Z');
   });
 
-  // Terminal Controls
-  els.btnTermSend.addEventListener('click', () => {
-    const raw = els.termCommandInput.value.trim();
-    if (raw) {
-      sendHardwareCommand(raw);
-      els.termCommandInput.value = '';
-    }
+  // Emergency Stop Hero Button
+  els.btnHeroEmergencyStop.addEventListener('click', () => {
+    state.isEmergencyStopped = !state.isEmergencyStopped;
+    updateUI();
+    sendCommand('S');
   });
 
-  els.termCommandInput.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter') {
-      const raw = els.termCommandInput.value.trim();
-      if (raw) {
-        sendHardwareCommand(raw);
-        els.termCommandInput.value = '';
-      }
-    }
+  // Disconnect & Pair BT Modal
+  els.btnDisconnect.addEventListener('click', () => {
+    state.isConnected = false;
+    updateConnectionBar();
+    updateUI();
   });
 
-  els.btnTermClear.addEventListener('click', () => {
-    els.terminalLogs.innerHTML = '';
+  els.btnPairBt.addEventListener('click', () => {
+    els.modalOverlay.classList.add('active');
   });
 
-  els.btnTermCopy.addEventListener('click', () => {
-    const text = els.terminalLogs.innerText;
-    navigator.clipboard.writeText(text).then(() => {
-      showToast("Terminal logs copied to clipboard");
-    });
+  els.btnCloseModal.addEventListener('click', () => {
+    els.modalOverlay.classList.remove('active');
   });
 
-  // Audio Toggle
-  els.btnAudioToggle.addEventListener('click', () => {
-    if (window.stepperAudio) {
-      const isMuted = window.stepperAudio.toggleMute();
-      state.isAudioMuted = isMuted;
-      els.btnAudioToggle.innerHTML = isMuted ? '🔇 Audio: Off' : '🔊 Audio: On';
-      showToast(isMuted ? "Sound muted" : "Sound enabled");
-    }
-  });
-
-  // Connection Modal
-  function updateConnectionPill() {
-    if (state.connectionType === 'simulated') {
-      els.connectionStatusPill.className = 'status-pill simulated';
-      els.connectionStatusText.textContent = 'Simulated Engine';
-    } else if (state.isConnected) {
-      els.connectionStatusPill.className = 'status-pill connected';
-      els.connectionStatusText.textContent = state.connectionType === 'serial' ? 'USB Serial Connected' : 'ESP32 BLE Connected';
-    } else {
-      els.connectionStatusPill.className = 'status-pill emergency';
-      els.connectionStatusText.textContent = 'Disconnected';
-    }
-  }
-
-  els.btnOpenConnectModal.addEventListener('click', () => {
-    els.connectModal.classList.add('active');
-  });
-
-  els.btnCloseConnectModal.addEventListener('click', () => {
-    els.connectModal.classList.remove('active');
-  });
-
-  els.btnSelectSimulated.addEventListener('click', () => {
-    state.connectionType = 'simulated';
+  els.btnConnectSim.addEventListener('click', () => {
     state.isConnected = true;
-    updateConnectionPill();
-    els.connectModal.classList.remove('active');
-    showToast("Connected to Simulation Engine");
+    state.connectedDeviceName = "NEMA17-Controller (Simulated)";
+    updateConnectionBar();
+    els.modalOverlay.classList.remove('active');
+    updateUI();
   });
 
-  els.btnSelectWebSerial.addEventListener('click', async () => {
-    els.connectModal.classList.remove('active');
-    const ok = await serialService.connect();
-    if (ok) {
-      state.connectionType = 'serial';
-      state.isConnected = true;
-      updateConnectionPill();
-      showToast("Connected via Web Serial!");
-    }
+  els.btnConnectSerial.addEventListener('click', async () => {
+    els.modalOverlay.classList.remove('active');
+    await serialService.connect();
   });
 
-  els.btnSelectWebBle.addEventListener('click', async () => {
-    els.connectModal.classList.remove('active');
-    const ok = await bleService.connect();
-    if (ok) {
-      state.connectionType = 'ble';
-      state.isConnected = true;
-      updateConnectionPill();
-      showToast("Connected via Web Bluetooth!");
-    }
-  });
-
-  // Specs Modal
-  els.btnOpenSpecsModal.addEventListener('click', () => {
-    els.specsModal.classList.add('active');
-  });
-
-  els.btnCloseSpecsModal.addEventListener('click', () => {
-    els.specsModal.classList.remove('active');
-  });
-
-  // Initial Boot Logs
-  addTerminalLog("[BOOT] G28 Cyberpunk Stepper Controller Web App initialized.");
-  addTerminalLog("[BOOT] Physics Engine active @ 60 FPS. Ready for commands.");
-  updateConnectionPill();
-  updatePositionUI();
+  // Initial Sync
+  updateConnectionBar();
+  updateUI();
 });
