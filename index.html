@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#060911">
+  <meta name="description" content="G28 Stepper Motor Controller — Industrial Cyberpunk Web Application with full motor physics, Web Bluetooth & Web Serial API connectivity, dual-mode velocity & angle controls.">
+  <title>G28 Stepper Controller — Industrial Web App</title>
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%23060911' stroke='%2300e5ff' stroke-width='6'/><circle cx='50' cy='50' r='20' fill='%2300e5ff'/><line x1='50' y1='10' x2='50' y2='30' stroke='%2300e5ff' stroke-width='6'/><line x1='50' y1='70' x2='50' y2='90' stroke='%2300e5ff' stroke-width='6'/><line x1='10' y1='50' x2='30' y2='50' stroke='%2300e5ff' stroke-width='6'/><line x1='70' y1='50' x2='90' y2='50' stroke='%2300e5ff' stroke-width='6'/></svg>">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&family=Orbitron:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+
+  <div class="app-container">
+
+    <!-- ====================================================================
+         HEADER / TOP NAVIGATION BAR
+         ==================================================================== -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="brand-logo">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"></circle>
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M12 3v3"></path>
+            <path d="M12 18v3"></path>
+            <path d="M3 12h3"></path>
+            <path d="M18 12h3"></path>
+          </svg>
+        </div>
+        <div class="brand-info">
+          <h1>G28 CONTROLLER <span class="brand-tag">NEMA17</span></h1>
+          <div class="brand-sub">DUAL-MODE STEPPER TELEMETRY SYSTEM</div>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <!-- Live Connection Pill -->
+        <div id="connectionStatusPill" class="status-pill simulated">
+          <span class="status-dot"></span>
+          <span id="connectionStatusText">Simulated Engine</span>
+        </div>
+
+        <!-- Audio Toggle -->
+        <button id="btnAudioToggle" class="btn-tactical" title="Toggle Stepper Motor Sound Synthesis">
+          🔇 Audio: Off
+        </button>
+
+        <!-- Hardware Connect Button -->
+        <button id="btnOpenConnectModal" class="btn-tactical primary" title="Connect Hardware (BLE / Web Serial)">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6.5 6.5 17.5 17.5l-5 5V1.5l5 5L6.5 17.5"></path>
+          </svg>
+          CONNECT
+        </button>
+
+        <!-- Specs Modal Button -->
+        <button id="btnOpenSpecsModal" class="btn-tactical" title="Hardware Specs & Protocol">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          SPECS
+        </button>
+      </div>
+    </header>
+
+    <!-- ====================================================================
+         EMERGENCY STOP BANNER (Active when halted)
+         ==================================================================== -->
+    <section id="emergencyBanner" class="emergency-banner">
+      <div class="emergency-icon">⚠️</div>
+      <div class="emergency-text">
+        <h3>EMERGENCY STOP ACTIVE — COILS RELEASED</h3>
+        <p>Motor driver H-bridges disconnected (command 'S'). Click resume below or send 'S' to re-engage.</p>
+      </div>
+    </section>
+
+    <!-- ====================================================================
+         MAIN 3-COLUMN DASHBOARD GRID
+         ==================================================================== -->
+    <main class="dashboard-grid">
+
+      <!-- ================================================================
+           COLUMN 1: OPERATING MODE & CONTROLLER CONTROLS
+           ================================================================ -->
+      <section class="column-left">
+
+        <!-- Mode Switcher Tabs -->
+        <div class="mode-tabs">
+          <button id="modeTabVelocity" class="mode-tab-btn active velocity">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+            VELOCITY (M1)
+          </button>
+          <button id="modeTabPosition" class="mode-tab-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+            </svg>
+            ANGLE GO (M2)
+          </button>
+        </div>
+
+        <!-- PANEL 1: VELOCITY MODE CONTROLS -->
+        <div id="velocityModePanel" class="cyber-card">
+          <div class="card-header">
+            <div class="card-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--neon-cyan)" stroke-width="2">
+                <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+              </svg>
+              VELOCITY CONTROL
+            </div>
+            <div class="card-subtitle">PWM SPEED THROTTLE</div>
+          </div>
+
+          <!-- Speed Slider Box -->
+          <div class="speed-control-box">
+            <div class="speed-header">
+              <span class="speed-label">TARGET SPEED:</span>
+              <span id="speedReadout" class="speed-readout">40 RPM</span>
+            </div>
+
+            <div class="cyber-slider-wrap">
+              <input type="range" id="speedSlider" class="cyber-slider" min="0" max="80" value="40" step="1">
+            </div>
+
+            <div class="slider-ticks">
+              <span>0 RPM</span>
+              <span>20</span>
+              <span>40</span>
+              <span>60</span>
+              <span>80 RPM (MAX)</span>
+            </div>
+          </div>
+
+          <!-- Direction Controls -->
+          <div class="card-subtitle" style="margin-bottom: 8px;">DIRECTION SELECTOR:</div>
+          <div class="direction-grid">
+            <button id="btnDirFwd" class="dir-btn active fwd">
+              <span class="dir-icon">⏩</span>
+              <span class="dir-name">FORWARD</span>
+              <span class="dir-cmd">SEND 'F' (CW)</span>
+            </button>
+            <button id="btnDirRev" class="dir-btn">
+              <span class="dir-icon">⏪</span>
+              <span class="dir-name">REVERSE</span>
+              <span class="dir-cmd">SEND 'R' (CCW)</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- PANEL 2: ANGLE POSITION MODE CONTROLS (Initially hidden) -->
+        <div id="positionModePanel" class="cyber-card" style="display: none;">
+          <div class="card-header">
+            <div class="card-title" style="color: var(--neon-amber);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--neon-amber)" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="22" y1="12" x2="18" y2="12"></line>
+                <line x1="6" y1="12" x2="2" y2="12"></line>
+                <line x1="12" y1="6" x2="12" y2="2"></line>
+                <line x1="12" y1="22" x2="12" y2="18"></line>
+              </svg>
+              ANGLE POSITIONING
+            </div>
+            <div class="card-subtitle">STEP DEGREE TARGET</div>
+          </div>
+
+          <!-- Quick Preset Chips -->
+          <div class="card-subtitle" style="margin-bottom: 6px;">QUICK PRESET ANGLES:</div>
+          <div class="preset-chips-wrap">
+            <button class="preset-chip" data-angle="15">+15°</button>
+            <button class="preset-chip" data-angle="45">+45°</button>
+            <button class="preset-chip" data-angle="90">+90°</button>
+            <button class="preset-chip" data-angle="180">+180°</button>
+            <button class="preset-chip" data-angle="270">+270°</button>
+            <button class="preset-chip" data-angle="315">-45°</button>
+            <button class="preset-chip" data-angle="0">0°</button>
+          </div>
+
+          <!-- Tactical Keypad -->
+          <div class="keypad-wrapper">
+            <div class="keypad-display">
+              <span class="keypad-label">TARGET ANGLE:</span>
+              <span id="keypadBufferDisplay" class="keypad-buffer">90°</span>
+            </div>
+
+            <div class="keypad-grid">
+              <button class="key-btn" data-key="7">7</button>
+              <button class="key-btn" data-key="8">8</button>
+              <button class="key-btn" data-key="9">9</button>
+              <button class="key-btn" data-key="4">4</button>
+              <button class="key-btn" data-key="5">5</button>
+              <button class="key-btn" data-key="6">6</button>
+              <button class="key-btn" data-key="1">1</button>
+              <button class="key-btn" data-key="2">2</button>
+              <button class="key-btn" data-key="3">3</button>
+              <button class="key-btn clear" data-key="C">C</button>
+              <button class="key-btn" data-key="0">0</button>
+              <button class="key-btn go" data-key="GO">MOVE</button>
+            </div>
+
+            <!-- Jog Buttons -->
+            <div class="card-subtitle" style="margin-bottom: 6px;">FINE JOG STEPS:</div>
+            <div class="jog-buttons-grid">
+              <button class="jog-btn" data-step="1">
+                <span class="jog-val">+1°</span>
+                <span class="jog-label">JOG</span>
+              </button>
+              <button class="jog-btn" data-step="10">
+                <span class="jog-val">+10°</span>
+                <span class="jog-label">JOG</span>
+              </button>
+              <button class="jog-btn" data-step="-1">
+                <span class="jog-val">-1°</span>
+                <span class="jog-label">JOG</span>
+              </button>
+              <button class="jog-btn" data-step="-10">
+                <span class="jog-val">-10°</span>
+                <span class="jog-label">JOG</span>
+              </button>
+            </div>
+
+            <!-- Zero Tare Button -->
+            <button id="btnZeroTare" class="btn-tactical" style="width: 100%; border-color: var(--neon-amber); color: var(--neon-amber);">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="4"></circle>
+              </svg>
+              ZERO TARE ORIGIN (SEND 'Z')
+            </button>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ================================================================
+           COLUMN 2: STEPPER CANVAS & DIAL VISUALIZERS
+           ================================================================ -->
+      <section class="column-center cyber-card">
+        <div class="card-header">
+          <div class="card-title">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--neon-cyan)" stroke-width="2">
+              <circle cx="12" cy="12" r="9"></circle>
+              <circle cx="12" cy="12" r="3"></circle>
+            </svg>
+            NEMA 17 MOTOR DYNAMICS
+          </div>
+          <div class="card-subtitle">200-STEP RESOLUTION (1.8°)</div>
+        </div>
+
+        <!-- Stepper Motor Canvas Visualizer -->
+        <div class="motor-visualizer-container">
+          <canvas id="motorCanvas" width="280" height="280"></canvas>
+          <div id="motorStatusBadge" class="motor-badge-overlay">CW (FWD)</div>
+        </div>
+
+        <!-- Target Angle Compass Dial -->
+        <div class="dial-gauge-container">
+          <canvas id="dialCanvas" width="240" height="240"></canvas>
+          <div class="dial-center-readout">
+            <span id="targetAngleReadout" class="target-deg-val">90°</span>
+            <span id="actualAngleReadout" class="actual-deg-val">TARGET ANGLE</span>
+          </div>
+        </div>
+
+        <!-- HERO EMERGENCY STOP BUTTON -->
+        <button id="btnHeroEmergencyStop" class="hero-emergency-btn">
+          <span style="font-size: 1.4rem;">⛔</span>
+          EMERGENCY STOP (SEND 'S')
+        </button>
+      </section>
+
+      <!-- ================================================================
+           COLUMN 3: TELEMETRY TILES, OSCILLOSCOPE & SERIAL TERMINAL
+           ================================================================ -->
+      <section class="column-right">
+
+        <!-- Live Telemetry Card -->
+        <div class="cyber-card" style="margin-bottom: 20px;">
+          <div class="card-header">
+            <div class="card-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--neon-green)" stroke-width="2">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+              </svg>
+              TELEMETRY STREAM
+            </div>
+            <div class="card-subtitle">LIVE GATT PACKET DATA</div>
+          </div>
+
+          <div class="telemetry-row">
+            <div class="telemetry-tile">
+              <span class="tile-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                VELOCITY
+              </span>
+              <span id="telemetrySpeedVal" class="tile-value">40 RPM</span>
+              <span class="tile-subtext">Shaft Speed</span>
+            </div>
+
+            <div class="telemetry-tile">
+              <span class="tile-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"></path><path d="m12 5 7 7-7 7"></path></svg>
+                ROTATION
+              </span>
+              <span id="telemetryDirVal" class="tile-value purple">FORWARD</span>
+              <span class="tile-subtext">Direction</span>
+            </div>
+
+            <div class="telemetry-tile">
+              <span class="tile-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+                ANGLE
+              </span>
+              <span id="telemetryAngleVal" class="tile-value amber">0°</span>
+              <span class="tile-subtext">Shaft Position</span>
+            </div>
+
+            <div class="telemetry-tile">
+              <span class="tile-label">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>
+                MODE
+              </span>
+              <span id="telemetryModeVal" class="tile-value green">VELOCITY</span>
+              <span class="tile-subtext">State Controller</span>
+            </div>
+          </div>
+
+          <!-- Digital Phase Oscilloscope -->
+          <div class="card-subtitle" style="margin-bottom: 6px;">4-PHASE STATOR PULSE OSCILLOSCOPE:</div>
+          <div class="oscilloscope-box">
+            <canvas id="scopeCanvas" width="320" height="120"></canvas>
+            <div class="scope-legend">
+              <div class="legend-item"><span class="legend-dot" style="background:#00e5ff;"></span>Phase A+</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#a855f7;"></span>Phase B+</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#ff9100;"></span>Phase A-</div>
+              <div class="legend-item"><span class="legend-dot" style="background:#10b981;"></span>Phase B-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Serial Communication Console -->
+        <div class="cyber-card">
+          <div class="card-header">
+            <div class="card-title">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--neon-cyan)" stroke-width="2">
+                <polyline points="4 17 10 11 4 5"></polyline>
+                <line x1="12" y1="19" x2="20" y2="19"></line>
+              </svg>
+              SERIAL PROTOCOL MONITOR
+            </div>
+            <div class="card-subtitle">TX/RX FRAMES</div>
+          </div>
+
+          <div class="terminal-box">
+            <div class="terminal-header">
+              <span class="terminal-title">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 17 10 11 4 5"></polyline></svg>
+                9600 BAUD
+              </span>
+              <div class="terminal-tools">
+                <button id="btnTermCopy" class="term-tool-btn">COPY</button>
+                <button id="btnTermClear" class="term-tool-btn">CLEAR</button>
+              </div>
+            </div>
+
+            <div id="terminalLogs" class="terminal-logs">
+              <!-- Logs injected dynamically -->
+            </div>
+
+            <div class="terminal-input-bar">
+              <input type="text" id="termCommandInput" class="term-input" placeholder="Type command (e.g. V45, G90, F, R, S, Z)...">
+              <button id="btnTermSend" class="term-send-btn">SEND</button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+    </main>
+
+    <!-- ====================================================================
+         HARDWARE CONNECTION MODAL
+         ==================================================================== -->
+    <div id="connectModal" class="modal-backdrop">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h2>CONNECT HARDWARE OR SIMULATION</h2>
+          <button id="btnCloseConnectModal" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">
+            Choose a connection method below. If you don't have hardware attached, the <strong>Built-in Simulation Engine</strong> provides 100% full interactive testing with realistic physics.
+          </p>
+
+          <div class="connection-options-grid">
+            <div id="btnSelectSimulated" class="conn-card">
+              <div class="conn-icon">💻</div>
+              <h4>Mock Simulator</h4>
+              <p>Realistic motor physics & GATT telemetry (No hardware needed)</p>
+            </div>
+
+            <div id="btnSelectWebSerial" class="conn-card">
+              <div class="conn-icon">🔌</div>
+              <h4>USB Web Serial</h4>
+              <p>Arduino Uno / Nano directly via USB Cable at 9600 baud</p>
+            </div>
+
+            <div id="btnSelectWebBle" class="conn-card" style="grid-column: span 2;">
+              <div class="conn-icon">📡</div>
+              <h4>ESP32 Web Bluetooth (BLE)</h4>
+              <p>Connects over wireless Bluetooth Low Energy to NEMA17-Controller</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================
+         HARDWARE SPECIFICATIONS & PROTOCOL MODAL
+         ==================================================================== -->
+    <div id="specsModal" class="modal-backdrop">
+      <div class="modal-dialog">
+        <div class="modal-header">
+          <h2>SYSTEM ARCHITECTURE & PROTOCOL SPECS</h2>
+          <button id="btnCloseSpecsModal" class="modal-close">&times;</button>
+        </div>
+        <div class="modal-body">
+          <h4 style="font-family: var(--font-header); font-size: 0.9rem; color: var(--neon-cyan); margin-bottom: 8px;">
+            HARDWARE SPECIFICATIONS
+          </h4>
+          <table class="specs-table">
+            <tr><td>Microcontroller</td><td>ESP32 Dev Module / Arduino Uno</td></tr>
+            <tr><td>Stepper Motor</td><td>NEMA 17 Bipolar (42×42mm)</td></tr>
+            <tr><td>Step Angle</td><td>1.8° per step (200 steps/rev)</td></tr>
+            <tr><td>Motor Driver</td><td>AFMotor Shield v1 (L293D) / A4988</td></tr>
+            <tr><td>Baud Rate</td><td>9600 Baud (8-N-1)</td></tr>
+            <tr><td>Max Velocity</td><td>80 RPM</td></tr>
+          </table>
+
+          <h4 style="font-family: var(--font-header); font-size: 0.9rem; color: var(--neon-amber); margin: 20px 0 8px 0;">
+            SERIAL COMMAND PROTOCOL
+          </h4>
+          <table class="specs-table">
+            <tr><td><code>V&lt;rpm&gt;</code></td><td>Set Speed RPM (0–80) e.g. <code>V45</code></td></tr>
+            <tr><td><code>F</code></td><td>Forward Direction (Clockwise)</td></tr>
+            <tr><td><code>R</code></td><td>Reverse Direction (Counter-Clockwise)</td></tr>
+            <tr><td><code>G&lt;deg&gt;</code></td><td>Go To Target Angle e.g. <code>G90</code></td></tr>
+            <tr><td><code>M&lt;1|2&gt;</code></td><td>Switch Mode (1=Velocity, 2=Position)</td></tr>
+            <tr><td><code>S</code></td><td>Emergency Stop Toggle (Coil Release)</td></tr>
+            <tr><td><code>Z</code></td><td>Zero Tare Current Position (0°)</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
+
+  </div>
+
+  <!-- Application Scripts -->
+  <script src="js/audio/stepper_synth.js"></script>
+  <script src="js/visualizers/stepper_canvas.js"></script>
+  <script src="js/visualizers/dial_gauge.js"></script>
+  <script src="js/visualizers/oscilloscope.js"></script>
+  <script src="js/hardware/mock_engine.js"></script>
+  <script src="js/hardware/serial_service.js"></script>
+  <script src="js/hardware/ble_service.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

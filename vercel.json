@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "name": "g28-stepper-controller",
+  "cleanUrls": true,
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
+  ]
+}
