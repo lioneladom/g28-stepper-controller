@@ -1,25 +1,17 @@
-/* ==========================================================================
-   G28 STEPPER CONTROLLER — THEME & LAYOUT
-   Responsive: stacked on mobile, side-by-side on desktop
-   ========================================================================== */
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Orbitron:wght@600;700;800;900&display=swap');
 
 :root {
   --bg-dark: #0B0F19;
   --card-bg: #161E2E;
   --card-border: #232F45;
-
   --primary-cyan: #00E5FF;
   --accent-purple: #8B5CF6;
   --success-green: #10B981;
   --danger-red: #FF1744;
   --warning-yellow: #FFC107;
-
   --text-main: #F8FAFC;
   --text-muted: #94A3B8;
   --text-dim: #64748B;
-
   --font-header: 'Orbitron', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --font-body: 'Inter', sans-serif;
@@ -34,21 +26,18 @@ body {
   min-height: 100vh;
 }
 
-/* ── Shell ── */
 .app-shell {
-  max-width: 920px;
-  margin: 0 auto;
+  width: 100%;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 
-/* ── AppBar ── */
 .app-bar {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 18px 20px;
+  padding: 16px 20px;
   border-bottom: 1px solid rgba(35,47,69,.5);
 }
 .app-bar h1 {
@@ -58,36 +47,47 @@ body {
   letter-spacing: 1.2px;
 }
 
-/* ── Body ── */
-.app-body {
+/* ── TOP BAR: connection + mode tabs side by side on desktop ── */
+.top-bar {
+  padding: 12px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+@media (min-width: 768px) {
+  .top-bar {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    padding: 12px 32px;
+  }
+  .top-bar .card.connection-bar { flex: 1; }
+  .top-bar .mode-tabs { flex: 0 0 380px; }
+}
+
+/* ── MAIN 2-COL GRID on desktop ── */
+.main-area {
   flex: 1;
-  padding: 16px 20px 40px;
+  padding: 12px 20px 40px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 16px;
 }
 
-/* ── Responsive Grid: motor left, controls right on desktop ── */
-.layout-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-@media (min-width: 720px) {
-  .layout-grid {
+@media (min-width: 768px) {
+  .main-area {
     display: grid;
-    grid-template-columns: 280px 1fr;
-    gap: 24px;
+    grid-template-columns: 320px 1fr;
+    grid-template-rows: auto 1fr;
+    gap: 20px;
+    padding: 16px 32px 40px;
     align-items: start;
   }
-  .left-col {
-    position: sticky;
-    top: 20px;
-  }
+  .e-banner-wrap { grid-column: 1 / -1; }
+  .left-panel { grid-column: 1; grid-row: 2; }
+  .right-panel { grid-column: 2; grid-row: 2; }
 }
 
-/* ── Card ── */
 .card {
   background: var(--card-bg);
   border: 1px solid var(--card-border);
@@ -95,7 +95,6 @@ body {
   padding: 16px;
 }
 
-/* ── Labels ── */
 .label-sm {
   font-family: var(--font-mono);
   font-size: .69rem;
@@ -103,7 +102,6 @@ body {
   color: var(--text-dim);
   letter-spacing: .3px;
 }
-.sub-sm {
-  font-size: .69rem;
-  color: var(--text-muted);
-}
+.sub-sm { font-size: .69rem; color: var(--text-muted); }
+.gap-sm { margin-top: 8px; }
+.gap-md { margin-top: 16px; }
