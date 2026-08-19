@@ -1,8 +1,9 @@
 /**
  * G28 STEPPER MOTOR CANVAS WIDGET
- * Dual-mode:
- * - Velocity Mode: Continuous rotation at configured RPM & direction.
- * - Angle Go Mode: Smooth interpolation to target angle & position hold.
+ * Dual-mode Stepper Animation Engine:
+ * - Velocity Mode (Mode 1): Continuous rotation at set RPM & direction.
+ * - Angle Go Mode (Mode 2): Pauses continuous rotation, receives angle targets,
+ *   rotates smoothly to target angle position, and holds.
  */
 class StepperMotorWidget {
   constructor(canvasId) {
@@ -17,8 +18,10 @@ class StepperMotorWidget {
     this.currentSpeed = 0; // RPM
     this.rotationAngle = 0; // Radians
 
-    this.targetAngleDegrees = 0;
-    this.currentAngleDegrees = 0;
+    // Angular position tracking
+    this.currentAngleDeg = 0;
+    this.targetAngleDeg = 0;
+    this.isMovingAngle = false;
 
     this.lastTs = performance.now();
 
@@ -39,13 +42,40 @@ class StepperMotorWidget {
   }
 
   updateState({ mode, isRunning, isForward, isEmergencyStopped, speed, targetAngle, currentAngle }) {
-    if (mode !== undefined) this.mode = mode;
+    if (mode !== undefined) {
+      if (this.mode !== mode) {
+        this.mode = mode;
+        if (mode === 2) {
+          // When switching to Angle Go mode: pause spin and hold current angle
+          let currentNormalized = ((this.rotationAngle * 180 / Math.PI) % 360);
+          if (currentNormalized < 0) currentNormalized += 360;
+          this.currentAngleDeg = Math.round(currentNormalized);
+          this.targetAngleDeg = this.currentAngleDeg;
+          this.rotationAngle = (this.currentAngleDeg * Math.PI) / 180;
+        }
+      }
+    }
     if (isRunning !== undefined) this.isRunning = isRunning;
     if (isForward !== undefined) this.isForward = isForward;
     if (isEmergencyStopped !== undefined) this.isEmergencyStopped = isEmergencyStopped;
     if (speed !== undefined) this.currentSpeed = Math.max(0, speed);
-    if (targetAngle !== undefined) this.targetAngleDegrees = targetAngle;
-    if (currentAngle !== undefined) this.currentAngleDegrees = currentAngle;
+
+    if (targetAngle !== undefined) {
+      this.targetAngleDeg = targetAngle;
+      this.isMovingAngle = Math.abs(this.targetAngleDeg - this.currentAngleDeg) > 0.5;
+    }
+  }
+
+  setAngleTarget(targetDeg) {
+    this.targetAngleDeg = targetDeg;
+    this.isMovingAngle = true;
+  }
+
+  resetZero() {
+    this.currentAngleDeg = 0;
+    this.targetAngleDeg = 0;
+    this.rotationAngle = 0;
+    this.isMovingAngle = false;
   }
 
   _loop(now) {
@@ -54,24 +84,30 @@ class StepperMotorWidget {
 
     if (!this.isEmergencyStopped) {
       if (this.mode === 1) {
-        // Mode 1: Velocity continuous rotation
+        // Mode 1: Continuous Velocity Mode
         if (this.isRunning && this.currentSpeed > 0) {
           const rps = (this.currentSpeed * 2 * Math.PI) / 60;
           this.rotationAngle += rps * dt * (this.isForward ? 1 : -1);
           this.rotationAngle %= (2 * Math.PI);
+          this.currentAngleDeg = ((this.rotationAngle * 180 / Math.PI) % 360);
+          if (this.currentAngleDeg < 0) this.currentAngleDeg += 360;
         }
       } else if (this.mode === 2) {
-        // Mode 2: Angle Position mode (smoothly ease toward target angle)
-        const targetRad = (this.targetAngleDegrees * Math.PI) / 180;
-        let diff = targetRad - this.rotationAngle;
-        // Normalize diff to -PI .. PI
-        diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+        // Mode 2: Angle Go Mode — paused continuous rotation, smoothly step to targetAngleDeg
+        const diff = this.targetAngleDeg - this.currentAngleDeg;
+        const absDiff = Math.abs(diff);
 
-        if (Math.abs(diff) > 0.004) {
-          const step = diff * Math.min(1, 8 * dt);
-          this.rotationAngle += step;
+        if (absDiff > 0.5) {
+          this.isMovingAngle = true;
+          // Step speed: proportional with minimum 140 deg/sec for responsive smooth animation
+          const stepSpeed = Math.max(140, Math.min(360, absDiff * 3.5));
+          const step = Math.sign(diff) * Math.min(absDiff, stepSpeed * dt);
+          this.currentAngleDeg += step;
+          this.rotationAngle = (this.currentAngleDeg * Math.PI) / 180;
         } else {
-          this.rotationAngle = targetRad;
+          this.currentAngleDeg = this.targetAngleDeg;
+          this.rotationAngle = (this.targetAngleDeg * Math.PI) / 180;
+          this.isMovingAngle = false;
         }
       }
     }
@@ -84,7 +120,7 @@ class StepperMotorWidget {
     const c = this.ctx, s = this.size, cx = s / 2, r = s / 2 - (s * 0.074);
     c.clearRect(0, 0, s, s);
 
-    // Stator poles color based on active mode
+    // Stator poles color based on active mode & state
     let statorColor = '#64748B';
     if (this.isEmergencyStopped) {
       statorColor = '#FF1744';

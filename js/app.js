@@ -2,7 +2,7 @@
  * G28 STEPPER CONTROLLER — APP LOGIC
  * Standalone Web Bluetooth with automatic mode switching:
  * - Velocity Mode: Continuous spinning (CW / CCW) at set RPM.
- * - Angle Go Mode: Direct angle rotation animation & positioning.
+ * - Angle Go Mode: Pauses spinning, takes angles, rotates smoothly to target & holds.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -70,15 +70,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // 2. Angle Readouts
     el.angleVal.textContent = state.angle + '°';
 
-    // 3. Motor Animation Mode Switching
+    // 3. Motor Animation Mode Handling
     if (state.stopped) {
       motor.updateState({
         mode: state.mode,
         isRunning: false,
         isForward: state.fwd,
         isEmergencyStopped: true,
-        speed: 0,
-        targetAngle: state.angle
+        speed: 0
       });
       el.motorRing.className = 'motor-ring stop';
       el.motorPill.textContent = 'HALTED';
@@ -104,13 +103,12 @@ document.addEventListener('DOMContentLoaded', () => {
         el.motorPill.className = 'motor-pill';
       }
     } else if (state.mode === 2) {
-      // ANGLE GO MODE: Positional alignment and hold
+      // ANGLE GO MODE: Paused continuous rotation, holds angle
       motor.updateState({
         mode: 2,
         isRunning: true,
         isEmergencyStopped: false,
-        targetAngle: state.angle,
-        currentAngle: state.angle
+        targetAngle: state.angle
       });
       el.motorRing.className = 'motor-ring ang';
       el.motorPill.textContent = 'POS: ' + state.angle + '°';
@@ -148,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // ── Automatic Mode Tabs Switching ──
+  // ── Automatic Mode Switching ──
   el.tabVel.onclick = () => {
     state.mode = 1;
     el.tabVel.className = 'mode-tab vel-on';
@@ -156,7 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
     el.velPage.style.display = 'block';
     el.angPage.style.display = 'none';
     send('M1');
-    render(); // Instantly switch animation behavior to Velocity mode
+    render(); // Resumes continuous velocity rotation
   };
 
   el.tabAng.onclick = () => {
@@ -166,7 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
     el.angPage.style.display = 'block';
     el.velPage.style.display = 'none';
     send('M2');
-    render(); // Instantly switch animation behavior to Angle Go mode
+    render(); // Pauses continuous rotation, holds angular position
   };
 
   // ── Velocity Speed Slider ──
@@ -200,8 +198,8 @@ document.addEventListener('DOMContentLoaded', () => {
       if (state.stopped) return;
       const deg = +c.dataset.deg;
       el.angleInput.value = deg;
-      state.angle = (state.angle + deg) % 360;
-      if (state.angle < 0) state.angle += 360;
+      state.angle = state.angle + deg;
+      motor.setAngleTarget(state.angle);
       render();
       send('G' + deg);
     };
@@ -211,8 +209,8 @@ document.addEventListener('DOMContentLoaded', () => {
   el.btnGo.onclick = () => {
     if (state.stopped) return;
     const deg = parseInt(el.angleInput.value) || 0;
-    state.angle = (state.angle + deg) % 360;
-    if (state.angle < 0) state.angle += 360;
+    state.angle = state.angle + deg;
+    motor.setAngleTarget(state.angle);
     render();
     send('G' + deg);
   };
@@ -220,6 +218,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── Angle Reset to 0° ──
   el.btnTare.onclick = () => {
     state.angle = 0;
+    motor.resetZero();
     render();
     send('Z');
   };
