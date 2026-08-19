@@ -1,18 +1,18 @@
 /**
- * G28 STEPPER CONTROLLER — MOBILE & DESKTOP APP SCRIPT
- * Faithful 1:1 reproduction of the Flutter ArduinoBtProvider & MainArduinoBtScreen logic.
+ * G28 STEPPER CONTROLLER — MASTER SCRIPT
+ * Direct standalone Web Bluetooth integration with clean simple mobile UI.
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-  // App State matching ArduinoBtProvider
+  // App State
   const state = {
     activeMode: 1, // 1 = Velocity Mode, 2 = Position Mode
     currentSpeedRpm: 40,
     directionForward: true,
     isEmergencyStopped: false,
     currentAngleDegrees: 0,
-    isConnected: true,
-    connectedDeviceName: "NEMA17-Controller (Simulated)"
+    isConnected: false,
+    connectedDeviceName: ""
   };
 
   // DOM References
@@ -47,49 +47,43 @@ document.addEventListener('DOMContentLoaded', () => {
     btnMoveGo: document.getElementById('btnMoveGo'),
 
     btnHeroEmergencyStop: document.getElementById('btnHeroEmergencyStop'),
-    emergencyBtnText: document.getElementById('emergencyBtnText'),
-
-    modalOverlay: document.getElementById('modalOverlay'),
-    btnCloseModal: document.getElementById('btnCloseModal'),
-    btnConnectSim: document.getElementById('btnConnectSim'),
-    btnConnectSerial: document.getElementById('btnConnectSerial')
+    emergencyBtnText: document.getElementById('emergencyBtnText')
   };
 
   // Stepper Motor Canvas Widget
   const motorWidget = new StepperMotorWidget('motorCanvas');
 
-  // Telemetry Handler from Simulated Hardware or Real Serial
-  function handleTelemetry(telemetry) {
-    state.currentAngleDegrees = telemetry.angle;
-    state.isEmergencyStopped = telemetry.emergencyStopped;
-    state.directionForward = telemetry.direction === 1;
-
-    // Update UI elements
-    updateUI();
-  }
-
-  // Hardware and Simulation Engines
-  const mockEngine = new MockHardwareEngine({
-    onTelemetry: handleTelemetry,
-    onLog: () => {},
-    onPhaseStep: () => {}
-  });
-
-  const serialService = new WebSerialService({
-    onTelemetry: handleTelemetry,
-    onLog: () => {},
-    onStateChange: (connState) => {
-      state.isConnected = connState === 'connected';
-      state.connectedDeviceName = state.isConnected ? "Arduino USB Serial" : "";
+  // Real Web Bluetooth Controller
+  const bleController = new RealBluetoothController({
+    onTelemetry: (telemetry) => {
+      state.currentAngleDegrees = telemetry.angle;
+      state.isEmergencyStopped = telemetry.emergencyStopped;
+      state.directionForward = telemetry.direction === 1;
+      state.currentSpeedRpm = telemetry.speed;
+      updateUI();
+    },
+    onConnectionChanged: ({ state: connState, deviceName }) => {
+      if (connState === 'connected') {
+        state.isConnected = true;
+        state.connectedDeviceName = deviceName || "Bluetooth Device";
+      } else if (connState === 'connecting') {
+        state.isConnected = false;
+        state.connectedDeviceName = "Connecting...";
+      } else {
+        state.isConnected = false;
+        state.connectedDeviceName = "";
+      }
       updateConnectionBar();
+      updateUI();
+    },
+    onError: (errMsg) => {
+      alert(errMsg);
     }
   });
 
   function sendCommand(cmd) {
-    if (serialService.isConnected) {
-      serialService.sendCommand(cmd);
-    } else {
-      mockEngine.sendCommand(cmd);
+    if (state.isConnected) {
+      bleController.sendCommand(cmd);
     }
   }
 
@@ -106,7 +100,7 @@ document.addEventListener('DOMContentLoaded', () => {
       els.dirVal.style.color = state.directionForward ? "var(--primary-cyan)" : "var(--accent-purple)";
     }
     if (els.dirCmdSub) {
-      els.dirCmdSub.textContent = state.directionForward ? "Command: 'F'" : "Command: 'R'";
+      els.dirCmdSub.textContent = state.directionForward ? "Clockwise" : "Counter-Clockwise";
     }
 
     // 3. Current Angle Display
@@ -114,8 +108,8 @@ document.addEventListener('DOMContentLoaded', () => {
       els.currentAngleVal.textContent = `${state.currentAngleDegrees}°`;
     }
 
-    // 4. Motor Widget Visualizer State
-    const isRunning = state.isConnected && !state.isEmergencyStopped && (state.activeMode === 1 ? state.currentSpeedRpm > 0 : true);
+    // 4. Motor Visualizer State
+    const isRunning = state.isConnected && !state.isEmergencyStopped && state.currentSpeedRpm > 0;
 
     motorWidget.updateState({
       isRunning: isRunning,
@@ -153,10 +147,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (els.btnHeroEmergencyStop && els.emergencyBtnText) {
       if (state.isEmergencyStopped) {
         els.btnHeroEmergencyStop.classList.add('active');
-        els.emergencyBtnText.textContent = "RESUME OPERATION (SEND 'S')";
+        els.emergencyBtnText.textContent = "RESUME OPERATION";
       } else {
         els.btnHeroEmergencyStop.classList.remove('active');
-        els.emergencyBtnText.textContent = "EMERGENCY STOP (SEND 'S')";
+        els.emergencyBtnText.textContent = "EMERGENCY STOP";
       }
     }
 
@@ -181,6 +175,11 @@ document.addEventListener('DOMContentLoaded', () => {
       els.statusText.textContent = `Connected: ${state.connectedDeviceName}`;
       els.btnPairBt.style.display = 'none';
       els.btnDisconnect.style.display = 'block';
+    } else if (bleController.isConnecting) {
+      els.statusDot.className = 'status-dot connecting';
+      els.statusText.textContent = 'Connecting...';
+      els.btnPairBt.style.display = 'flex';
+      els.btnDisconnect.style.display = 'none';
     } else {
       els.statusDot.className = 'status-dot';
       els.statusText.textContent = 'Disconnected';
@@ -270,32 +269,13 @@ document.addEventListener('DOMContentLoaded', () => {
     sendCommand('S');
   });
 
-  // Disconnect & Pair BT Modal
+  // Connect & Disconnect Handlers
+  els.btnPairBt.addEventListener('click', async () => {
+    await bleController.requestAndConnect();
+  });
+
   els.btnDisconnect.addEventListener('click', () => {
-    state.isConnected = false;
-    updateConnectionBar();
-    updateUI();
-  });
-
-  els.btnPairBt.addEventListener('click', () => {
-    els.modalOverlay.classList.add('active');
-  });
-
-  els.btnCloseModal.addEventListener('click', () => {
-    els.modalOverlay.classList.remove('active');
-  });
-
-  els.btnConnectSim.addEventListener('click', () => {
-    state.isConnected = true;
-    state.connectedDeviceName = "NEMA17-Controller (Simulated)";
-    updateConnectionBar();
-    els.modalOverlay.classList.remove('active');
-    updateUI();
-  });
-
-  els.btnConnectSerial.addEventListener('click', async () => {
-    els.modalOverlay.classList.remove('active');
-    await serialService.connect();
+    bleController.disconnect();
   });
 
   // Initial Sync

@@ -1,6 +1,6 @@
 /* ==========================================================================
    G28 STEPPER CONTROLLER — COMPONENT STYLES
-   Recreated 1:1 from the original Flutter UI components
+   Exact 1:1 mobile layout components with vector SVGs and clean labels
    ========================================================================== */
 
 /* 1. Connection Status Bar */
@@ -133,8 +133,9 @@
 }
 
 .emergency-banner-icon {
-  font-size: 1.6rem;
-  color: var(--danger-red);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .emergency-banner-title {
@@ -306,14 +307,14 @@ input[type="range"].mobile-slider::-moz-range-thumb {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
-.direction-btn .dir-icon {
-  font-size: 1.4rem;
+.direction-btn svg {
   color: var(--text-dim);
+  transition: color 0.2s ease;
 }
 
 .direction-btn .dir-label {
@@ -321,19 +322,14 @@ input[type="range"].mobile-slider::-moz-range-thumb {
   font-size: 0.85rem;
   font-weight: 700;
   color: var(--text-dim);
-}
-
-.direction-btn .dir-sub {
-  font-family: var(--font-mono);
-  font-size: 0.65rem;
-  color: var(--text-muted);
+  transition: color 0.2s ease;
 }
 
 .direction-btn.active.fwd {
   background: rgba(0, 229, 255, 0.15);
   border-color: var(--primary-cyan);
 }
-.direction-btn.active.fwd .dir-icon,
+.direction-btn.active.fwd svg,
 .direction-btn.active.fwd .dir-label {
   color: var(--primary-cyan);
 }
@@ -342,7 +338,7 @@ input[type="range"].mobile-slider::-moz-range-thumb {
   background: rgba(139, 92, 246, 0.15);
   border-color: var(--accent-purple);
 }
-.direction-btn.active.rev .dir-icon,
+.direction-btn.active.rev svg,
 .direction-btn.active.rev .dir-label {
   color: var(--accent-purple);
 }
@@ -484,93 +480,4 @@ input[type="range"].mobile-slider::-moz-range-thumb {
   background: var(--danger-red);
   color: #fff;
   box-shadow: 0 0 20px rgba(255, 23, 68, 0.6);
-}
-
-/* 10. Pair BT Bottom Sheet Modal */
-.modal-overlay {
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  z-index: 100;
-  display: none;
-  align-items: flex-end;
-  justify-content: center;
-}
-
-.modal-overlay.active {
-  display: flex;
-}
-
-.modal-sheet {
-  background-color: var(--bg-dark);
-  border-top-left-radius: 24px;
-  border-top-right-radius: 24px;
-  border-top: 1.5px solid var(--card-border);
-  width: 100%;
-  max-width: 460px;
-  max-height: 80vh;
-  padding: 24px;
-  display: flex;
-  flex-direction: column;
-  animation: slide-up 0.25s ease-out;
-}
-
-@keyframes slide-up {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
-}
-
-.modal-sheet-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-}
-
-.device-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-top: 16px;
-  overflow-y: auto;
-}
-
-.device-tile {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 14px;
-  background: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 14px;
-}
-
-.device-tile-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.device-tile-name {
-  font-family: var(--font-mono);
-  font-size: 0.85rem;
-  color: var(--text-main);
-}
-
-.device-tile-sub {
-  font-family: var(--font-body);
-  font-size: 0.72rem;
-  color: var(--text-muted);
-}
-
-.btn-device-connect {
-  background: rgba(0, 229, 255, 0.15);
-  color: var(--primary-cyan);
-  border: none;
-  padding: 6px 14px;
-  border-radius: 10px;
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
 }

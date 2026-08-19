@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#0B0F19">
-  <meta name="description" content="G28 Stepper Controller — Mobile & Desktop Stepper Motor Controller Web App.">
+  <meta name="description" content="G28 Stepper Motor Controller — Web Application">
   <title>G28 Stepper Controller</title>
 
   <!-- Google Fonts -->
@@ -25,48 +25,62 @@
       <h1 class="app-title">G28 STEPPER CONTROLLER</h1>
     </header>
 
-    <!-- Main Mobile Body View -->
+    <!-- Main Content -->
     <main class="app-content">
 
       <!-- 1. Connection Status Bar Card -->
       <div class="card connection-bar">
         <div class="connection-info">
-          <div id="statusDot" class="status-dot connected"></div>
-          <span id="statusText" class="status-text">Connected: NEMA17-Controller</span>
+          <div id="statusDot" class="status-dot"></div>
+          <span id="statusText" class="status-text">Disconnected</span>
         </div>
-        <button id="btnPairBt" class="btn-pair-bt" style="display: none;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5 17.5 17.5l-5 5V1.5l5 5L6.5 17.5"></path></svg>
+        <button id="btnPairBt" class="btn-pair-bt">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6.5 6.5 17.5 17.5l-5 5V1.5l5 5L6.5 17.5"></path>
+          </svg>
           Pair BT
         </button>
-        <button id="btnDisconnect" class="btn-disconnect">Disconnect</button>
+        <button id="btnDisconnect" class="btn-disconnect" style="display: none;">Disconnect</button>
       </div>
 
       <!-- 2. Mode Switching Segmented Tabs -->
       <div class="mode-segmented-tabs">
         <button id="tabVelocity" class="mode-tab active velocity">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
           VELOCITY MODE
         </button>
         <button id="tabPosition" class="mode-tab">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon>
+          </svg>
           ANGLE GO MODE
         </button>
       </div>
 
       <!-- 3. Emergency Alert Banner (Active when stopped) -->
       <div id="emergencyBanner" class="emergency-banner">
-        <div class="emergency-banner-icon">⚠️</div>
+        <div class="emergency-banner-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--danger-red)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
         <div>
           <div class="emergency-banner-title">EMERGENCY STOP ACTIVE</div>
-          <div class="emergency-banner-sub">Motor outputs released (cmd 'S'). Press toggle to resume.</div>
+          <div class="emergency-banner-sub">Motor outputs released. Press button below to resume.</div>
         </div>
       </div>
 
       <!-- 4. Motor Visualizer Display -->
       <div class="motor-wrapper">
-        <div id="motorBox" class="motor-container running-fwd">
+        <div id="motorBox" class="motor-container">
           <canvas id="motorCanvas" width="190" height="190"></canvas>
-          <div id="motorPill" class="motor-status-pill fwd">CW (FWD)</div>
+          <div id="motorPill" class="motor-status-pill">IDLE</div>
         </div>
       </div>
 
@@ -79,7 +93,7 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--primary-cyan)" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
               <span class="label-mono">MOTOR SPEED</span>
             </div>
-            <div id="motorSpeedVal" class="info-card-value" style="color: var(--primary-cyan);">40 RPM</div>
+            <div id="motorSpeedVal" class="info-card-value" style="color: var(--primary-cyan);">0 RPM</div>
             <div class="subtext-muted">App &amp; Potentiometer</div>
           </div>
 
@@ -89,7 +103,7 @@
               <span class="label-mono">DIRECTION</span>
             </div>
             <div id="dirVal" class="info-card-value" style="color: var(--primary-cyan);">FORWARD</div>
-            <div id="dirCmdSub" class="subtext-muted">Command: 'F'</div>
+            <div id="dirCmdSub" class="subtext-muted">Clockwise</div>
           </div>
         </div>
 
@@ -101,21 +115,25 @@
             <span id="sliderReadout" class="speed-value-cyan">40 RPM</span>
           </div>
           <input type="range" id="speedSlider" class="mobile-slider" min="0" max="80" value="40" step="1">
-          <div class="subtext-muted">Sends speed command ('V&lt;rpm&gt;') to Arduino</div>
+          <div class="subtext-muted">Adjust motor RPM in real-time</div>
         </div>
 
         <!-- Direction Controls -->
         <div class="label-mono">DIRECTION CONTROLS</div>
         <div class="direction-row">
           <button id="btnFwd" class="direction-btn active fwd">
-            <span class="dir-icon">⏩</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 19 22 12 13 5 13 19"></polygon>
+              <polygon points="2 19 11 12 2 5 2 19"></polygon>
+            </svg>
             <span class="dir-label">FORWARD</span>
-            <span class="dir-sub">Send 'F'</span>
           </button>
           <button id="btnRev" class="direction-btn">
-            <span class="dir-icon">⏪</span>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="11 19 2 12 11 5 11 19"></polygon>
+              <polygon points="22 19 13 12 22 5 22 19"></polygon>
+            </svg>
             <span class="dir-label">REVERSE</span>
-            <span class="dir-sub">Send 'R'</span>
           </button>
         </div>
       </div>
@@ -133,7 +151,7 @@
           </div>
           <button id="btnZeroTare" class="btn-zero-tare">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="3"></circle></svg>
-            ZERO TARE (0°)
+            ZERO TARE
           </button>
         </div>
 
@@ -163,55 +181,22 @@
         </div>
       </div>
 
-      <!-- 7. Emergency Stop Hero Button (Always accessible) -->
+      <!-- 7. Emergency Stop Hero Button -->
       <button id="btnHeroEmergencyStop" class="hero-emergency-btn">
-        <span style="font-size: 1.4rem;">⛔</span>
-        <span id="emergencyBtnText">EMERGENCY STOP (SEND 'S')</span>
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <rect x="9" y="9" width="6" height="6"></rect>
+        </svg>
+        <span id="emergencyBtnText">EMERGENCY STOP</span>
       </button>
 
     </main>
-
-    <!-- Bluetooth Scan Modal Sheet -->
-    <div id="modalOverlay" class="modal-overlay">
-      <div class="modal-sheet">
-        <div class="modal-sheet-header">
-          <span class="header-text" style="font-size: 1rem;">Bluetooth Devices</span>
-          <button id="btnCloseModal" style="background: none; border: none; color: var(--text-muted); font-size: 1.5rem; cursor: pointer;">&times;</button>
-        </div>
-        <div class="subtext-muted" style="font-size: 0.78rem;">Select your device below:</div>
-
-        <div class="device-list">
-          <div class="device-tile">
-            <div class="device-tile-info">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--primary-cyan)" stroke-width="2"><path d="M6.5 6.5 17.5 17.5l-5 5V1.5l5 5L6.5 17.5"></path></svg>
-              <div>
-                <div class="device-tile-name">NEMA17-Controller (Simulated)</div>
-                <div class="device-tile-sub">00:11:22:33:44:55 (Paired)</div>
-              </div>
-            </div>
-            <button id="btnConnectSim" class="btn-device-connect">Connect</button>
-          </div>
-
-          <div class="device-tile">
-            <div class="device-tile-info">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--success-green)" stroke-width="2"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path></svg>
-              <div>
-                <div class="device-tile-name">Arduino USB Serial Cable</div>
-                <div class="device-tile-sub">Web Serial (9600 baud)</div>
-              </div>
-            </div>
-            <button id="btnConnectSerial" class="btn-device-connect">Connect</button>
-          </div>
-        </div>
-      </div>
-    </div>
 
   </div>
 
   <!-- Scripts -->
   <script src="js/visualizers/stepper_canvas.js"></script>
-  <script src="js/hardware/mock_engine.js"></script>
-  <script src="js/hardware/serial_service.js"></script>
+  <script src="js/hardware/ble_service.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

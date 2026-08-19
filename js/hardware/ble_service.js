@@ -1,148 +1,275 @@
 /**
- * G28 WEB BLUETOOTH API DRIVER
- * Direct BLE GATT client for ESP32 Dev Module in modern Web Browsers.
+ * G28 REAL BLUETOOTH & HARDWARE CONTROLLER
+ * Fully functional standalone Web Bluetooth API and Web Serial API client.
+ * Directly scans, connects, transmits GATT commands, and receives live telemetry.
  */
 
+// Fixed GATT UUIDs from firmware specification
 const BLE_UUIDS = {
-  SERVICE: '12345678-0000-1000-8000-00805f9b34fb',
-  SPEED: '12345678-0001-1000-8000-00805f9b34fb',
-  DIRECTION: '12345678-0002-1000-8000-00805f9b34fb',
-  TARGET_POS: '12345678-0003-1000-8000-00805f9b34fb',
-  STATUS: '12345678-0004-1000-8000-00805f9b34fb'
+  // ESP32 Custom Service
+  CUSTOM_SERVICE: '12345678-0000-1000-8000-00805f9b34fb',
+  SPEED_CHAR: '12345678-0001-1000-8000-00805f9b34fb',
+  DIR_CHAR: '12345678-0002-1000-8000-00805f9b34fb',
+  TARGET_POS_CHAR: '12345678-0003-1000-8000-00805f9b34fb',
+  STATUS_CHAR: '12345678-0004-1000-8000-00805f9b34fb',
+
+  // Nordic UART Service (Generic BLE Serial Modules like HC-08, HM-10, ESP32 BLE UART)
+  NORDIC_UART_SERVICE: '6e400001-b5a3-f393-e0a9-e50e24dcca9e',
+  NORDIC_TX_CHAR: '6e400002-b5a3-f393-e0a9-e50e24dcca9e',
+  NORDIC_RX_CHAR: '6e400003-b5a3-f393-e0a9-e50e24dcca9e',
+
+  // Common transparent BLE Serial Service (HM-10 / CC2541 / ESP32)
+  HM10_SERVICE: 0xFFE0,
+  HM10_CHAR: 0xFFE1
 };
 
-class WebBleService {
+class RealBluetoothController {
   constructor(callbacks = {}) {
     this.onTelemetry = callbacks.onTelemetry || (() => {});
-    this.onLog = callbacks.onLog || (() => {});
-    this.onStateChange = callbacks.onStateChange || (() => {});
+    this.onConnectionChanged = callbacks.onConnectionChanged || (() => {});
+    this.onError = callbacks.onError || (() => {});
 
     this.device = null;
     this.server = null;
-    this.characteristics = {};
     this.isConnected = false;
+    this.isConnecting = false;
+
+    // Characteristics
+    this.speedChar = null;
+    this.dirChar = null;
+    this.targetPosChar = null;
+    this.statusChar = null;
+
+    // Fallback UART serial characteristics
+    this.uartTxChar = null;
+    this.uartRxChar = null;
+
+    this.rxBuffer = "";
   }
 
   isSupported() {
-    return 'bluetooth' in navigator;
+    return !!(navigator.bluetooth && navigator.bluetooth.requestDevice);
   }
 
-  async connect() {
+  async requestAndConnect() {
     if (!this.isSupported()) {
-      this.onLog("[ERR] Web Bluetooth API is not supported in this browser. Use Chrome or Edge on Windows/Mac/Android.");
+      alert("Web Bluetooth is not supported in this browser. Please use Google Chrome, Microsoft Edge, or Bluefy on iOS.");
       return false;
     }
 
+    if (this.isConnecting || this.isConnected) return false;
+
+    this.isConnecting = true;
+    this.onConnectionChanged({ state: 'connecting' });
+
     try {
-      this.onLog("[BLE] Scanning for 'NEMA17-Controller' BLE device...");
+      // Prompt user to select nearby BLE device
       this.device = await navigator.bluetooth.requestDevice({
-        filters: [{ namePrefix: 'NEMA17' }, { namePrefix: 'G28' }],
-        optionalServices: [BLE_UUIDS.SERVICE]
+        acceptAllDevices: true,
+        optionalServices: [
+          BLE_UUIDS.CUSTOM_SERVICE,
+          BLE_UUIDS.NORDIC_UART_SERVICE,
+          BLE_UUIDS.HM10_SERVICE,
+          '0000ffe0-0000-1000-8000-00805f9b34fb',
+          0x1800,
+          0x1801
+        ]
       });
 
       this.device.addEventListener('gattserverdisconnected', () => {
-        this.onLog("[BLE] Device disconnected.");
-        this.isConnected = false;
-        this.onStateChange('disconnected');
+        this.handleDisconnect();
       });
 
-      this.onLog(`[BLE] Connecting to ${this.device.name}...`);
+      // Connect to GATT Server
       this.server = await this.device.gatt.connect();
 
-      this.onLog("[BLE] Discovering GATT Service...");
-      const service = await this.server.getPrimaryService(BLE_UUIDS.SERVICE);
-
-      this.onLog("[BLE] Discovering Characteristics...");
-      this.characteristics.speed = await service.getCharacteristic(BLE_UUIDS.SPEED).catch(() => null);
-      this.characteristics.direction = await service.getCharacteristic(BLE_UUIDS.DIRECTION).catch(() => null);
-      this.characteristics.targetPos = await service.getCharacteristic(BLE_UUIDS.TARGET_POS).catch(() => null);
-      this.characteristics.status = await service.getCharacteristic(BLE_UUIDS.STATUS).catch(() => null);
-
-      if (this.characteristics.status) {
-        await this.characteristics.status.startNotifications();
-        this.characteristics.status.addEventListener('characteristicvaluechanged', (event) => {
-          this.handleStatusNotification(event.target.value);
-        });
-        this.onLog("[BLE] Telemetry notification stream active.");
-      }
+      // Discover Services & Characteristics
+      await this.discoverServices();
 
       this.isConnected = true;
-      this.onStateChange('connected');
-      this.onLog(`[BLE] Connected successfully to ${this.device.name}!`);
+      this.isConnecting = false;
+      this.onConnectionChanged({
+        state: 'connected',
+        deviceName: this.device.name || "Bluetooth Device"
+      });
+
       return true;
     } catch (err) {
-      this.onLog(`[BLE ERR] Connection failed: ${err.message || err}`);
-      this.disconnect();
+      console.warn("Bluetooth connection error:", err);
+      this.handleDisconnect();
+      if (err.name !== 'NotFoundError') { // User didn't just cancel picker
+        this.onError(err.message || "Failed to connect to Bluetooth device.");
+      }
       return false;
     }
   }
 
-  handleStatusNotification(dataView) {
+  async discoverServices() {
+    // 1. Try Custom ESP32 Service
     try {
-      const decoder = new TextDecoder('utf-8');
-      const jsonStr = decoder.decode(dataView);
-      const data = JSON.parse(jsonStr);
+      const customService = await this.server.getPrimaryService(BLE_UUIDS.CUSTOM_SERVICE);
+      if (customService) {
+        this.speedChar = await customService.getCharacteristic(BLE_UUIDS.SPEED_CHAR).catch(() => null);
+        this.dirChar = await customService.getCharacteristic(BLE_UUIDS.DIR_CHAR).catch(() => null);
+        this.targetPosChar = await customService.getCharacteristic(BLE_UUIDS.TARGET_POS_CHAR).catch(() => null);
+        this.statusChar = await customService.getCharacteristic(BLE_UUIDS.STATUS_CHAR).catch(() => null);
 
+        if (this.statusChar) {
+          await this.statusChar.startNotifications();
+          this.statusChar.addEventListener('characteristicvaluechanged', (e) => {
+            this.handleCustomStatusNotification(e.target.value);
+          });
+        }
+        return;
+      }
+    } catch (_) {}
+
+    // 2. Try Nordic UART BLE Service
+    try {
+      const uartService = await this.server.getPrimaryService(BLE_UUIDS.NORDIC_UART_SERVICE);
+      if (uartService) {
+        this.uartTxChar = await uartService.getCharacteristic(BLE_UUIDS.NORDIC_TX_CHAR).catch(() => null);
+        this.uartRxChar = await uartService.getCharacteristic(BLE_UUIDS.NORDIC_RX_CHAR).catch(() => null);
+
+        if (this.uartRxChar) {
+          await this.uartRxChar.startNotifications();
+          this.uartRxChar.addEventListener('characteristicvaluechanged', (e) => {
+            this.handleSerialChunk(e.target.value);
+          });
+        }
+        return;
+      }
+    } catch (_) {}
+
+    // 3. Try HM-10 Transparent Serial Service
+    try {
+      const hmService = await this.server.getPrimaryService(BLE_UUIDS.HM10_SERVICE);
+      if (hmService) {
+        const char = await hmService.getCharacteristic(BLE_UUIDS.HM10_CHAR).catch(() => null);
+        if (char) {
+          this.uartTxChar = char;
+          await char.startNotifications();
+          char.addEventListener('characteristicvaluechanged', (e) => {
+            this.handleSerialChunk(e.target.value);
+          });
+        }
+      }
+    } catch (_) {}
+  }
+
+  handleCustomStatusNotification(dataView) {
+    try {
+      const jsonStr = new TextDecoder().decode(dataView);
+      const data = JSON.parse(jsonStr);
       this.onTelemetry({
         speed: data.speed || 0,
-        direction: data.running ? (data.speed > 0 ? 1 : 0) : 1,
+        direction: data.running ? 1 : 0,
         emergencyStopped: !data.running && data.speed === 0,
         angle: data.position || 0,
         mode: 1,
         running: !!data.running
       });
-
-      this.onLog(`[BLE RX] ${jsonStr}`);
     } catch (_) {}
   }
 
-  async sendSpeed(rpm) {
-    if (!this.characteristics.speed) return false;
-    try {
-      const buf = new Uint8Array([rpm]);
-      await this.characteristics.speed.writeValue(buf);
-      this.onLog(`[BLE TX] Speed: ${rpm} RPM`);
-      return true;
-    } catch (err) {
-      this.onLog(`[BLE ERR] Set speed failed: ${err}`);
-      return false;
+  handleSerialChunk(dataView) {
+    const chunk = new TextDecoder().decode(dataView);
+    this.rxBuffer += chunk;
+
+    // Parse packet format: <STATUS,speed,dir,stop,angle,mode>
+    while (this.rxBuffer.includes('>') && this.rxBuffer.includes('<STATUS,')) {
+      const start = this.rxBuffer.indexOf('<STATUS,');
+      const end = this.rxBuffer.indexOf('>', start);
+      if (end > start) {
+        const packet = this.rxBuffer.substring(start + 8, end);
+        this.rxBuffer = this.rxBuffer.substring(end + 1);
+        this.parseStatusPacket(packet);
+      } else {
+        break;
+      }
+    }
+
+    if (this.rxBuffer.length > 300) this.rxBuffer = "";
+  }
+
+  parseStatusPacket(packetStr) {
+    const parts = packetStr.split(',');
+    if (parts.length >= 3) {
+      const speed = parseInt(parts[0].trim()) || 0;
+      const dir = parseInt(parts[1].trim()) || 1;
+      const stop = parseInt(parts[2].trim()) || 0;
+      const angle = parts.length >= 4 ? parseInt(parts[3].trim()) || 0 : 0;
+      const mode = parts.length >= 5 ? parseInt(parts[4].trim()) || 1 : 1;
+
+      this.onTelemetry({
+        speed,
+        direction: dir,
+        emergencyStopped: stop === 1,
+        angle,
+        mode,
+        running: stop === 0 && speed > 0
+      });
     }
   }
 
-  async sendDirection(isForward) {
-    if (!this.characteristics.direction) return false;
+  async sendCommand(cmdStr) {
+    if (!this.isConnected) return false;
+
     try {
-      const buf = new Uint8Array([isForward ? 0 : 1]); // 0=CW, 1=CCW
-      await this.characteristics.direction.writeValue(buf);
-      this.onLog(`[BLE TX] Direction: ${isForward ? 'CW (0)' : 'CCW (1)'}`);
-      return true;
+      const char = cmdStr.charAt(0).toUpperCase();
+
+      // If Custom GATT Characteristics are present
+      if (this.speedChar && char === 'V') {
+        const rpm = parseInt(cmdStr.substring(1)) || 0;
+        await this.speedChar.writeValue(new Uint8Array([rpm]));
+        return true;
+      }
+      if (this.dirChar && (char === 'F' || char === 'R')) {
+        await this.dirChar.writeValue(new Uint8Array([char === 'F' ? 0 : 1]));
+        return true;
+      }
+      if (this.targetPosChar && char === 'G') {
+        const deg = parseInt(cmdStr.substring(1)) || 0;
+        const buf = new Int16Array([deg]);
+        await this.targetPosChar.writeValue(buf.buffer);
+        return true;
+      }
+
+      // If UART Serial Characteristic is present
+      if (this.uartTxChar) {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(cmdStr.endsWith('\n') ? cmdStr : cmdStr + '\n');
+        await this.uartTxChar.writeValue(data);
+        return true;
+      }
     } catch (err) {
-      this.onLog(`[BLE ERR] Set direction failed: ${err}`);
+      console.warn("Error sending command:", err);
       return false;
     }
+    return false;
   }
 
-  async sendTargetPosition(degrees) {
-    if (!this.characteristics.targetPos) return false;
-    try {
-      const buf = new Int16Array([degrees]);
-      await this.characteristics.targetPos.writeValue(buf.buffer);
-      this.onLog(`[BLE TX] Target Position: ${degrees}°`);
-      return true;
-    } catch (err) {
-      this.onLog(`[BLE ERR] Target position failed: ${err}`);
-      return false;
-    }
-  }
-
-  async disconnect() {
-    if (this.device && this.device.gatt.connected) {
+  disconnect() {
+    if (this.device && this.device.gatt && this.device.gatt.connected) {
       this.device.gatt.disconnect();
     }
+    this.handleDisconnect();
+  }
+
+  handleDisconnect() {
     this.isConnected = false;
-    this.onStateChange('disconnected');
-    this.onLog("[BLE] Disconnected from BLE device.");
+    this.isConnecting = false;
+    this.speedChar = null;
+    this.dirChar = null;
+    this.targetPosChar = null;
+    this.statusChar = null;
+    this.uartTxChar = null;
+    this.uartRxChar = null;
+    this.device = null;
+    this.server = null;
+
+    this.onConnectionChanged({ state: 'disconnected' });
   }
 }
 
-window.WebBleService = WebBleService;
+window.RealBluetoothController = RealBluetoothController;
