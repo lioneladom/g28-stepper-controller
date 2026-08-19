@@ -1,7 +1,6 @@
 /**
  * G28 STEPPER MOTOR CANVAS WIDGET
- * High-DPI 220px Stepper Motor Visualizer.
- * Starts at 0 RPM (completely still) and rotates smoothly based on live telemetry speed.
+ * 190px — Starts at 0 RPM (completely idle).
  */
 
 class StepperMotorWidget {
@@ -9,26 +8,20 @@ class StepperMotorWidget {
     this.canvas = document.getElementById(canvasId);
     if (!this.canvas) return;
     this.ctx = this.canvas.getContext('2d');
-
-    this.size = 220;
-    this.setupHiDPI();
-
-    this.isRunning = false;
-    this.isForward = true;
-    this.isEmergencyStopped = false;
-    this.currentSpeed = 0; // Starts strictly at 0 RPM
-    this.rotationAngle = 0; // radians
-
-    this.lastTimestamp = performance.now();
-    this.animate = this.animate.bind(this);
-    requestAnimationFrame(this.animate);
-  }
-
-  setupHiDPI() {
+    this.size = 190;
     const dpr = window.devicePixelRatio || 1;
     this.canvas.width = this.size * dpr;
     this.canvas.height = this.size * dpr;
     this.ctx.scale(dpr, dpr);
+
+    this.isRunning = false;
+    this.isForward = true;
+    this.isEmergencyStopped = false;
+    this.currentSpeed = 0;
+    this.rotationAngle = 0;
+    this.lastTs = performance.now();
+    this._loop = this._loop.bind(this);
+    requestAnimationFrame(this._loop);
   }
 
   updateState({ isRunning, isForward, isEmergencyStopped, speed }) {
@@ -38,84 +31,64 @@ class StepperMotorWidget {
     if (speed !== undefined) this.currentSpeed = Math.max(0, speed);
   }
 
-  animate(now) {
-    const dt = (now - this.lastTimestamp) / 1000;
-    this.lastTimestamp = now;
-
-    // Only rotate if running, not emergency stopped, and speed is strictly positive
+  _loop(now) {
+    const dt = (now - this.lastTs) / 1000;
+    this.lastTs = now;
     if (this.isRunning && !this.isEmergencyStopped && this.currentSpeed > 0) {
-      const radPerSec = (this.currentSpeed * 2 * Math.PI) / 60;
-      const delta = radPerSec * dt * (this.isForward ? 1 : -1);
-      this.rotationAngle = (this.rotationAngle + delta) % (2 * Math.PI);
+      const rps = (this.currentSpeed * 2 * Math.PI) / 60;
+      this.rotationAngle += rps * dt * (this.isForward ? 1 : -1);
+      this.rotationAngle %= (2 * Math.PI);
     }
-
-    this.draw();
-    requestAnimationFrame(this.animate);
+    this._draw();
+    requestAnimationFrame(this._loop);
   }
 
-  draw() {
-    const ctx = this.ctx;
-    const center = this.size / 2;
-    const radius = this.size / 2 - 16;
+  _draw() {
+    const c = this.ctx, s = this.size, cx = s / 2, r = s / 2 - 14;
+    c.clearRect(0, 0, s, s);
 
-    ctx.clearRect(0, 0, this.size, this.size);
-
-    // 1. Stator Pole Inductors (4 poles at 0, 90, 180, 270 deg)
-    const statorColor = this.isEmergencyStopped
-      ? '#EF4444'
+    // Stator poles
+    const sc = this.isEmergencyStopped ? '#FF1744'
       : (this.isRunning && this.currentSpeed > 0
-          ? (this.isForward ? '#00E5FF' : '#A855F7')
-          : '#475569');
-
-    ctx.fillStyle = statorColor;
+        ? (this.isForward ? '#00E5FF' : '#8B5CF6') : '#64748B');
+    c.fillStyle = sc;
     for (let i = 0; i < 4; i++) {
-      const angle = (i * Math.PI) / 2;
-      const x = center + radius * Math.cos(angle);
-      const y = center + radius * Math.sin(angle);
-      ctx.beginPath();
-      ctx.arc(x, y, 7, 0, Math.PI * 2);
-      ctx.fill();
+      const a = (i * Math.PI) / 2;
+      c.beginPath();
+      c.arc(cx + r * Math.cos(a), cx + r * Math.sin(a), 6, 0, Math.PI * 2);
+      c.fill();
     }
 
-    // 2. Rotating Rotor Core
-    ctx.save();
-    ctx.translate(center, center);
-    ctx.rotate(this.rotationAngle);
+    // Rotor
+    c.save();
+    c.translate(cx, cx);
+    c.rotate(this.rotationAngle);
+    const rr = s * 0.55 / 2;
+    c.beginPath();
+    c.arc(0, 0, rr, 0, Math.PI * 2);
+    const g = c.createLinearGradient(-rr, -rr, rr, rr);
+    g.addColorStop(0, '#334155');
+    g.addColorStop(1, '#0F172A');
+    c.fillStyle = g;
+    c.fill();
+    c.lineWidth = 2;
+    c.strokeStyle = '#232F45';
+    c.stroke();
 
-    const rotorRadius = this.size * 0.56 / 2;
+    // Shaft notch
+    const nc = this.isEmergencyStopped ? '#FF1744' : (this.isForward ? '#00E5FF' : '#8B5CF6');
+    c.beginPath();
+    c.roundRect(-4, -rr + 6, 8, 20, 4);
+    c.fillStyle = nc;
+    c.fill();
 
-    // Rotor disc with gradient
-    ctx.beginPath();
-    ctx.arc(0, 0, rotorRadius, 0, Math.PI * 2);
-    const grad = ctx.createLinearGradient(-rotorRadius, -rotorRadius, rotorRadius, rotorRadius);
-    grad.addColorStop(0, '#334155');
-    grad.addColorStop(1, '#0F172A');
-    ctx.fillStyle = grad;
-    ctx.fill();
-    ctx.lineWidth = 2;
-    ctx.strokeStyle = '#1E293B';
-    ctx.stroke();
+    // Axle
+    c.beginPath();
+    c.arc(0, 0, 12, 0, Math.PI * 2);
+    c.fillStyle = '#64748B';
+    c.fill();
 
-    // Shaft notch indicator (top notch)
-    const notchColor = this.isEmergencyStopped
-      ? '#EF4444'
-      : (this.isForward ? '#00E5FF' : '#A855F7');
-
-    ctx.beginPath();
-    ctx.roundRect(-4, -rotorRadius + 6, 8, 22, 4);
-    ctx.fillStyle = notchColor;
-    ctx.fill();
-
-    // Center metal axle
-    ctx.beginPath();
-    ctx.arc(0, 0, 14, 0, Math.PI * 2);
-    ctx.fillStyle = '#64748B';
-    ctx.fill();
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = '#94A3B8';
-    ctx.stroke();
-
-    ctx.restore();
+    c.restore();
   }
 }
 

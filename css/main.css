@@ -1,43 +1,28 @@
 /* ==========================================================================
-   G28 STEPPER CONTROLLER — MODERN RESPONSIVE DESIGN SYSTEM
-   Sleek Dark Industrial Aesthetic with Seamless Mobile & Desktop Layouts
+   G28 STEPPER CONTROLLER — THEME
+   Exact colors and fonts from Flutter ArduinoBtTheme
    ========================================================================== */
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700;800&family=Orbitron:wght@600;700;800;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600;700&family=Orbitron:wght@600;700;800;900&display=swap');
 
 :root {
-  /* Color Palette */
-  --bg-dark: #090D16;
-  --bg-surface: #0F172A;
-  --card-bg: rgba(17, 24, 39, 0.85);
-  --card-border: #1E293B;
-  --card-border-focus: #334155;
+  --bg-dark: #0B0F19;
+  --card-bg: #161E2E;
+  --card-border: #232F45;
 
-  --cyan-primary: #00E5FF;
-  --cyan-glow: rgba(0, 229, 255, 0.25);
-  --cyan-dim: rgba(0, 229, 255, 0.12);
-
-  --purple-accent: #A855F7;
-  --purple-dim: rgba(168, 85, 247, 0.12);
-
-  --yellow-accent: #FFB703;
-  --yellow-glow: rgba(255, 183, 3, 0.25);
-  --yellow-dim: rgba(255, 183, 3, 0.12);
-
-  --green-success: #10B981;
-  --green-glow: rgba(16, 185, 129, 0.35);
-
-  --red-danger: #EF4444;
-  --red-glow: rgba(239, 68, 68, 0.35);
-  --red-dim: rgba(239, 68, 68, 0.12);
+  --primary-cyan: #00E5FF;
+  --accent-purple: #8B5CF6;
+  --success-green: #10B981;
+  --danger-red: #FF1744;
+  --warning-yellow: #FFC107;
 
   --text-main: #F8FAFC;
   --text-muted: #94A3B8;
   --text-dim: #64748B;
 
-  --font-header: 'Orbitron', -apple-system, sans-serif;
+  --font-header: 'Orbitron', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  --font-body: 'Inter', -apple-system, sans-serif;
+  --font-body: 'Inter', sans-serif;
 }
 
 * {
@@ -53,80 +38,63 @@ body {
   font-family: var(--font-body);
   min-height: 100vh;
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0;
-  background-image: 
-    radial-gradient(circle at 10% 20%, rgba(0, 229, 255, 0.04) 0%, transparent 40%),
-    radial-gradient(circle at 90% 80%, rgba(168, 85, 247, 0.04) 0%, transparent 40%);
+  justify-content: center;
 }
 
-/* Master Container */
-.app-container {
+/* Single centered column — identical on mobile and desktop */
+.app-shell {
   width: 100%;
-  max-width: 960px;
+  max-width: 480px;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 0 16px 40px 16px;
 }
 
-/* Top App Header */
-.app-header {
+/* AppBar */
+.app-bar {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px 0 16px 0;
-  border-bottom: 1px solid var(--card-border);
-  margin-bottom: 20px;
+  padding: 18px 20px;
+  border-bottom: 1px solid rgba(35, 47, 69, 0.5);
 }
 
-.app-title {
+.app-bar h1 {
   font-family: var(--font-header);
-  font-size: 1.15rem;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-  color: var(--text-main);
-  text-shadow: 0 0 15px rgba(0, 229, 255, 0.2);
-}
-
-/* Main Responsive Layout Grid */
-.main-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 20px;
-}
-
-@media (min-width: 768px) {
-  .main-grid {
-    grid-template-columns: 340px 1fr;
-    gap: 24px;
-    align-items: start;
-  }
-}
-
-/* Reusable Sleek Card */
-.sleek-card {
-  background-color: var(--card-bg);
-  border: 1px solid var(--card-border);
-  border-radius: 18px;
-  padding: 18px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.sleek-card:hover {
-  border-color: var(--card-border-focus);
-}
-
-/* Section Header Labels */
-.section-label {
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
+  font-size: 1rem;
   font-weight: 700;
+  letter-spacing: 1.2px;
+  color: var(--text-main);
+}
+
+/* Scrollable body content */
+.app-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 20px 32px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Card base */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 16px;
+}
+
+/* Label style */
+.label-sm {
+  font-family: var(--font-mono);
+  font-size: 0.69rem;
+  font-weight: 600;
   color: var(--text-dim);
-  letter-spacing: 0.8px;
-  text-transform: uppercase;
-  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+
+.sub-sm {
+  font-size: 0.69rem;
+  color: var(--text-muted);
 }
