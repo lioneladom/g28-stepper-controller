@@ -24,8 +24,8 @@ class StepperMotorWidget {
 
   _resize() {
     // Size to the container (.motor-ring)
-    const rect = this.canvas.parentElement.getBoundingClientRect();
-    this.size = Math.min(rect.width, rect.height);
+    const rect = this.canvas.parentElement ? this.canvas.parentElement.getBoundingClientRect() : null;
+    this.size = (rect && rect.width > 0) ? Math.min(rect.width, rect.height) : 220;
     const dpr = window.devicePixelRatio || 1;
     this.canvas.width = this.size * dpr;
     this.canvas.height = this.size * dpr;
