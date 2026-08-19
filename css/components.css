@@ -166,6 +166,10 @@
   border-color: var(--accent-purple);
   box-shadow: 0 0 20px rgba(139,92,246,.25);
 }
+.motor-ring.ang {
+  border-color: var(--warning-yellow);
+  box-shadow: 0 0 20px rgba(255,193,7,.3);
+}
 .motor-ring.stop {
   border-color: var(--danger-red);
   box-shadow: 0 0 20px rgba(255,23,68,.3);
@@ -192,9 +196,11 @@
   color: var(--text-dim);
   z-index: 2;
   backdrop-filter: blur(6px);
+  transition: all .2s;
 }
 .motor-pill.c-fwd { color: var(--primary-cyan); }
 .motor-pill.c-rev { color: var(--accent-purple); }
+.motor-pill.c-ang { color: var(--warning-yellow); border-color: rgba(255,193,7,.4); }
 .motor-pill.c-stop { color: var(--danger-red); border-color: var(--danger-red); }
 
 /* ── Info Cards Row ── */
